@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Signal History 📋</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f1eb;color:#2c3e50;min-height:100vh}
+:root{--steel:#5b8fa8;--dark:#34495e;--green:#27ae60;--red:#e74c3c;--gold:#f39c12;--purple:#8e44ad;--blue:#2980b9;--orange:#d35400;--gray:#8a9bae;--light:#fff;--border:rgba(91,143,168,.12)}
+
+.header{background:linear-gradient(135deg,#34495e,#4a6d8c 40%,#5b8fa8 70%,#6fa3bd);padding:20px 28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;box-shadow:0 4px 18px rgba(0,0,0,.12)}
+.header h1{font-size:22px;font-weight:800;color:#fff;letter-spacing:.8px}
+.header p{color:#d5e8f2;font-size:11px;margin-top:2px}
+.h-btns{display:flex;gap:8px;flex-wrap:wrap}
+.h-btn{padding:8px 18px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid rgba(255,255,255,.3);color:#fff;background:rgba(255,255,255,.08);text-decoration:none;transition:.3s;letter-spacing:.5px;backdrop-filter:blur(8px)}
+.h-btn:hover{background:rgba(255,255,255,.18)}
+.h-btn.danger{border-color:rgba(231,76,60,.4);color:#ff8a80}
+.h-btn.danger:hover{background:rgba(231,76,60,.2)}
+.h-btn.export{border-color:rgba(46,204,113,.4);color:#a5d6a7}
+.h-btn.export:hover{background:rgba(46,204,113,.15)}
+
+.container{max-width:1600px;margin:0 auto;padding:16px 28px}
+
+/* FILTER BAR */
+.filter-bar{display:flex;gap:8px;flex-wrap:wrap;padding:14px 18px;background:var(--light);border-radius:10px;border:1px solid #e0e0e0;margin-bottom:16px;box-shadow:0 1px 6px rgba(0,0,0,.02);align-items:center}
+.f-label{font-size:9px;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+.f-select,.f-input{padding:6px 10px;border-radius:5px;border:1px solid rgba(91,143,168,.18);font-size:11px;color:var(--dark);background:var(--light);outline:none;transition:.2s}
+.f-select:focus,.f-input:focus{border-color:var(--steel);box-shadow:0 0 5px rgba(91,143,168,.12)}
+.f-input{width:120px}
+.f-reset{padding:6px 12px;border-radius:5px;border:1px solid rgba(231,76,60,.2);color:var(--red);background:none;cursor:pointer;font-size:10px;font-weight:700;transition:.2s}
+.f-reset:hover{background:rgba(231,76,60,.06)}
+
+/* STATS CARDS */
+.stats-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:10px;margin-bottom:16px}
+.stat-card{background:rgba(255,255,255,.7);backdrop-filter:blur(10px);border-radius:9px;border:1px solid var(--border);padding:14px 10px;text-align:center;transition:.3s;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2.5px;border-radius:2px 2px 0 0}
+.stat-card:nth-child(1)::before{background:var(--steel)}
+.stat-card:nth-child(2)::before{background:var(--green)}
+.stat-card:nth-child(3)::before{background:var(--red)}
+.stat-card:nth-child(4)::before{background:var(--blue)}
+.stat-card:nth-child(5)::before{background:var(--gold)}
+.stat-card:nth-child(6)::before{background:var(--purple)}
+.stat-card:nth-child(7)::before{background:var(--orange)}
+.stat-card:nth-child(8)::before{background:var(--green)}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(91,143,168,.08)}
+.st-l{font-size:8px;color:var(--gray);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px}
+.st-v{font-size:20px;font-weight:800;color:var(--dark)}
+.st-v.pos{color:var(--green)}.st-v.neg{color:var(--red)}
+.st-s{font-size:8px;color:var(--gray);margin-top:2px}
+
+/* GRADE COMPARISON */
+.grade-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.grade-card{background:rgba(255,255,255,.65);backdrop-filter:blur(12px);border-radius:10px;border:1px solid var(--border);padding:16px;box-shadow:0 2px 10px rgba(91,143,168,.04);transition:.3s}
+.grade-card:hover{box-shadow:0 4px 18px rgba(91,143,168,.08)}
+.gc-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.gc-grade{font-size:18px;font-weight:800;letter-spacing:.5px}
+.gc-grade.ap{color:var(--green)}.gc-grade.a{color:var(--blue)}.gc-grade.bp{color:var(--orange)}
+.gc-count{font-size:10px;color:var(--gray);padding:2px 8px;background:rgba(91,143,168,.05);border-radius:10px}
+.gc-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.gc-item{display:flex;justify-content:space-between;padding:4px 6px;background:rgba(91,143,168,.02);border-radius:4px;font-size:9px}
+.gc-item .gl{color:var(--gray)}.gc-item .gv{font-weight:700;color:var(--dark)}
+.gv.pos{color:var(--green)}.gv.neg{color:var(--red)}
+
+/* TABLE */
+.tbl-wrap{background:var(--light);border-radius:10px;border:1px solid #e0e0e0;overflow:hidden;box-shadow:0 1px 8px rgba(0,0,0,.03);margin-bottom:16px}
+.tbl-hdr{padding:12px 16px;background:linear-gradient(135deg,rgba(91,143,168,.05),transparent);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.tbl-title{font-size:13px;font-weight:800;color:var(--dark)}
+.tbl-count{font-size:10px;color:var(--gray);padding:2px 8px;background:rgba(91,143,168,.05);border-radius:10px}
+.tbl-scroll{overflow-x:auto}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:10px}
+thead th{background:rgba(91,143,168,.04);color:var(--steel);font-weight:700;text-transform:uppercase;letter-spacing:.4px;font-size:8px;padding:8px 8px;text-align:left;border-bottom:1px solid var(--border);position:sticky;top:0;cursor:pointer;white-space:nowrap;user-select:none}
+thead th:hover{background:rgba(91,143,168,.08)}
+thead th.sorted-asc::after{content:' ▲';font-size:7px}
+thead th.sorted-desc::after{content:' ▼';font-size:7px}
+tbody tr{transition:.15s}
+tbody tr:hover{background:rgba(91,143,168,.03)}
+tbody td{padding:7px 8px;border-bottom:1px solid rgba(0,0,0,.025);color:var(--dark);vertical-align:middle;white-space:nowrap}
+.t-sym{font-weight:700;color:var(--dark)}
+.t-fno{font-size:7px;padding:1px 4px;border-radius:2px;background:rgba(243,156,18,.08);color:#e67e22;border:1px solid rgba(243,156,18,.12);margin-left:2px}
+.t-dir{font-weight:700;font-size:9px}
+.t-dir.long{color:var(--green)}.t-dir.short{color:var(--red)}
+.t-grade{padding:2px 6px;border-radius:3px;font-weight:800;font-size:9px;letter-spacing:.3px}
+.t-grade.ap{background:rgba(39,174,96,.08);color:var(--green);border:1px solid rgba(39,174,96,.15)}
+.t-grade.a{background:rgba(52,152,219,.08);color:var(--blue);border:1px solid rgba(52,152,219,.15)}
+.t-grade.bp{background:rgba(243,156,18,.06);color:var(--orange);border:1px solid rgba(243,156,18,.12)}
+.t-en{color:var(--steel);font-weight:600}
+.t-sl{color:var(--red);font-weight:600}
+.t-tg{color:var(--green);font-weight:600}
+
+/* MODEL DOTS */
+.m-dots{display:flex;gap:3px}
+.m-dot{width:8px;height:8px;border-radius:50%;border:1px solid}
+.m-dot.on.z{background:rgba(52,152,219,.3);border-color:var(--blue)}
+.m-dot.on.w{background:rgba(142,68,173,.3);border-color:var(--purple)}
+.m-dot.on.v{background:rgba(211,84,0,.3);border-color:var(--orange)}
+.m-dot.on.m{background:rgba(39,174,96,.3);border-color:var(--green)}
+.m-dot.on.t{background:rgba(243,156,18,.3);border-color:var(--gold)}
+.m-dot.off{background:rgba(0,0,0,.03);border-color:rgba(0,0,0,.08)}
+
+.t-outcome{padding:4px 6px;border-radius:4px;border:1px solid var(--border);font-size:9px;background:var(--light);color:var(--dark);outline:none;cursor:pointer}
+.t-exit{padding:3px 5px;border:1px solid var(--border);border-radius:3px;font-size:9px;width:65px;outline:none;background:var(--light);color:var(--dark)}
+.t-exit:focus,.t-outcome:focus{border-color:var(--steel)}
+.t-pnl{font-weight:700;font-size:9px}
+.t-pnl.pos{color:var(--green)}.t-pnl.neg{color:var(--red)}.t-pnl.neu{color:var(--gray)}
+
+/* PAGINATION */
+.pagination{display:flex;justify-content:center;gap:4px;padding:12px}
+.pg-btn{padding:5px 10px;border-radius:4px;border:1px solid var(--border);background:var(--light);color:var(--dark);font-size:10px;cursor:pointer;transition:.2s;font-weight:600}
+.pg-btn:hover{background:rgba(91,143,168,.06)}
+.pg-btn.active{background:var(--steel);color:#fff;border-color:var(--steel)}
+.pg-btn:disabled{opacity:.4;cursor:not-allowed}
+
+.empty{text-align:center;padding:50px;color:var(--gray);font-size:12px}
+
+.footer{text-align:center;padding:14px 28px;background:var(--light);border-top:1px solid #e8e8e8;margin-top:16px}
+.footer p{font-size:9px;color:#95a5a6;line-height:1.5}
+.footer .ver{color:var(--steel);font-weight:700}
+
+@media(max-width:1000px){
+.stats-grid{grid-template-columns:repeat(4,1fr)}
+.grade-grid{grid-template-columns:1fr}
+.filter-bar{flex-direction:column}
+.container{padding:10px 14px}
+.header{padding:16px}
+}
+@media(max-width:600px){
+.stats-grid{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+<div>
+<h1>📋 Signal History & Track Record</h1>
+<p>Auto-logged signals from every scan · Outcome tracking · Grade comparison</p>
+</div>
+<div class="h-btns">
+<a href="index.html" class="h-btn">← Back to Scanner</a>
+<button class="h-btn export" onclick="exportCSV()">📥 Export CSV</button>
+<button class="h-btn danger" onclick="clearAll()">🗑️ Clear All</button>
+</div>
+</div>
+
+<div class="container">
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+<span class="f-label">Filters:</span>
+<select class="f-select" id="fGrade" onchange="applyFilters()">
+<option value="">All Grades</option><option value="A+">A+</option><option value="A">A</option><option value="B+">B+</option>
+</select>
+<select class="f-select" id="fDir" onchange="applyFilters()">
+<option value="">All Directions</option><option value="LONG">Buy/Long</option><option value="SHORT">Sell/Short</option>
+</select>
+<select class="f-select" id="fTrend" onchange="applyFilters()">
+<option value="">All Trends</option><option value="uptrend">Uptrend</option><option value="downtrend">Downtrend</option><option value="sideways">Sideways</option>
+</select>
+<select class="f-select" id="fOutcome" onchange="applyFilters()">
+<option value="">All Outcomes</option><option value="pending">Pending</option><option value="target_hit">Target Hit</option><option value="stop_hit">Stop Hit</option><option value="expired">Expired</option>
+</select>
+<input class="f-input" id="fSymbol" placeholder="Search symbol..." oninput="applyFilters()">
+<button class="f-reset" onclick="resetFilters()">Reset</button>
+</div>
+
+<!-- STATS -->
+<div class="stats-grid" id="statsGrid"></div>
+
+<!-- GRADE COMPARISON -->
+<div class="grade-grid" id="gradeGrid"></div>
+
+<!-- TABLE -->
+<div class="tbl-wrap">
+<div class="tbl-hdr">
+<span class="tbl-title">Signal Log</span>
+<span class="tbl-count" id="tblCount">0 signals</span>
+</div>
+<div class="tbl-scroll">
+<table>
+<thead><tr>
+<th onclick="sortBy('scan_date')">Date</th>
+<th onclick="sortBy('symbol')">Symbol</th>
+<th onclick="sortBy('direction')">Dir</th>
+<th onclick="sortBy('grade')">Grade</th>
+<th onclick="sortBy('grade_score')">Score</th>
+<th>Models</th>
+<th onclick="sortBy('entry')">Entry</th>
+<th onclick="sortBy('stop_loss')">SL</th>
+<th onclick="sortBy('target')">Target</th>
+<th onclick="sortBy('risk_reward')">R:R</th>
+<th onclick="sortBy('probability')">Conf</th>
+<th onclick="sortBy('trend')">Trend</th>
+<th>Outcome</th>
+<th>Exit ₹</th>
+<th onclick="sortBy('pnl')">P&L%</th>
+</tr></thead>
+<tbody id="tblBody"></tbody>
+</table>
+</div>
+<div class="pagination" id="pagination"></div>
+</div>
+</div>
+
+<div class="footer">
+<p><span class="ver">Signal History v1.0</span><br>Auto-logs all signals · Max 5,000 stored · Outcome tracking · Grade comparison</p>
+</div>
+
+<script>
+const PER_PAGE=50;
+let allSignals=JSON.parse(localStorage.getItem('signalHistory')||'[]');
+let filtered=[...allSignals];
+let currentPage=1;
+let sortCol='scan_date';
+let sortDir='desc';
+
+function save(){localStorage.setItem('signalHistory',JSON.stringify(allSignals))}
+
+function getActiveCount(s){
+    if(!s.exhaustion_components)return 0;
+    let c=s.exhaustion_components,cnt=0;
+    if((c.zscore_component||0)>=5)cnt++;
+    if((c.wick_component||0)>=5)cnt++;
+    if((c.volume_component||0)>=5)cnt++;
+    if((c.momentum_component||0)>=5)cnt++;
+    if(s.mtf_confirmed)cnt++;
+    return cnt;
+}
+
+function modelDots(s){
+    if(!s.exhaustion_components){
+        // Quantum scanner format
+        if(s.agreeing_models){
+            const models=['MRB','MDD','VRC','OFI','MTC'];
+            const active=s.agreeing_models?s.agreeing_models.split(', '):[];
+            const cls=['z','w','v','m','t'];
+            return models.map((m,i)=>`<div class="m-dot ${active.includes(m)?'on '+cls[i]:'off'}" title="${m}"></div>`).join('');
+        }
+        return '<div class="m-dots">—</div>';
+    }
+    let c=s.exhaustion_components;
+    let dots=[
+        {v:c.zscore_component||0,c:'z',n:'Z-Score'},
+        {v:c.wick_component||0,c:'w',n:'Wick'},
+        {v:c.volume_component||0,c:'v',n:'Volume'},
+        {v:c.momentum_component||0,c:'m',n:'Momentum'},
+        {v:s.mtf_confirmed?10:0,c:'t',n:'MTF'}
+    ];
+    return dots.map(d=>`<div class="m-dot ${d.v>=5?'on '+d.c:'off'}" title="${d.n}: ${d.v}"></div>`).join('');
+}
+
+function calcPnL(s){
+    if(!s.exit_price||s.exit_price==='')return'';
+    let ex=parseFloat(s.exit_price),en=s.entry;
+    if(isNaN(ex)||!en)return'';
+    if(s.direction==='LONG'||s.direction==='BUY')return(((ex-en)/en)*100).toFixed(2);
+    return(((en-ex)/en)*100).toFixed(2);
+}
+
+function updateOutcome(id,val){
+    let s=allSignals.find(x=>x._id===id);
+    if(s){s.outcome=val;save();render()}
+}
+
+function updateExit(id,val){
+    let s=allSignals.find(x=>x._id===id);
+    if(s){s.exit_price=val;s.pnl=calcPnL(s);save();render()}
+}
+
+function applyFilters(){
+    let g=document.getElementById('fGrade').value;
+    let d=document.getElementById('fDir').value;
+    let t=document.getElementById('fTrend').value;
+    let o=document.getElementById('fOutcome').value;
+    let sym=document.getElementById('fSymbol').value.toUpperCase();
+    filtered=allSignals.filter(s=>{
+        if(g&&s.grade!==g)return false;
+        if(d){
+            let dir=s.direction||'';
+            if(d==='LONG'&&dir!=='LONG'&&dir!=='BUY')return false;
+            if(d==='SHORT'&&dir!=='SHORT'&&dir!=='SELL')return false;
+        }
+        if(t&&(s.trend||'')!==t)return false;
+        if(o&&(s.outcome||'pending')!==o)return false;
+        if(sym&&!(s.symbol||'').includes(sym))return false;
+        return true;
+    });
+    currentPage=1;
+    render();
+}
+
+function resetFilters(){
+    document.getElementById('fGrade').value='';
+    document.getElementById('fDir').value='';
+    document.getElementById('fTrend').value='';
+    document.getElementById('fOutcome').value='';
+    document.getElementById('fSymbol').value='';
+    filtered=[...allSignals];
+    currentPage=1;
+    render();
+}
+
+function sortBy(col){
+    if(sortCol===col)sortDir=sortDir==='asc'?'desc':'asc';
+    else{sortCol=col;sortDir='desc'}
+    filtered.sort((a,b)=>{
+        let va=a[col]||'',vb=b[col]||'';
+        if(typeof va==='number'&&typeof vb==='number')return sortDir==='asc'?va-vb:vb-va;
+        va=String(va);vb=String(vb);
+        return sortDir==='asc'?va.localeCompare(vb):vb.localeCompare(va);
+    });
+    render();
+}
+
+function renderStats(){
+    let all=filtered;
+    let total=all.length;
+    let tgtHit=all.filter(s=>s.outcome==='target_hit').length;
+    let stpHit=all.filter(s=>s.outcome==='stop_hit').length;
+    let resolved=tgtHit+stpHit;
+    let wr=resolved>0?((tgtHit/resolved)*100).toFixed(1):'-';
+    let pending=all.filter(s=>!s.outcome||s.outcome==='pending').length;
+    let scores=all.map(s=>s.grade_score||s.score||0).filter(v=>v>0);
+    let avgScore=scores.length>0?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'-';
+    let rrs=all.map(s=>s.risk_reward||s.rr_ratio||0).filter(v=>v>0);
+    let avgRR=rrs.length>0?(rrs.reduce((a,b)=>a+b,0)/rrs.length).toFixed(1):'-';
+    let pnls=all.map(s=>parseFloat(s.pnl)||0).filter(v=>v!==0);
+    let totalPnl=pnls.length>0?pnls.reduce((a,b)=>a+b,0).toFixed(2):'0';
+
+    document.getElementById('statsGrid').innerHTML=`
+        <div class="stat-card"><div class="st-l">Total Signals</div><div class="st-v">${total}</div></div>
+        <div class="stat-card"><div class="st-l">Targets Hit</div><div class="st-v pos">${tgtHit}</div></div>
+        <div class="stat-card"><div class="st-l">Stops Hit</div><div class="st-v neg">${stpHit}</div></div>
+        <div class="stat-card"><div class="st-l">Win Rate</div><div class="st-v ${parseFloat(wr)>=50?'pos':'neg'}">${wr}%</div></div>
+        <div class="stat-card"><div class="st-l">Pending</div><div class="st-v">${pending}</div></div>
+        <div class="stat-card"><div class="st-l">Avg Score</div><div class="st-v">${avgScore}</div></div>
+        <div class="stat-card"><div class="st-l">Avg R:R</div><div class="st-v">${avgRR}</div></div>
+        <div class="stat-card"><div class="st-l">Total P&L</div><div class="st-v ${parseFloat(totalPnl)>=0?'pos':'neg'}">${totalPnl}%</div></div>
+    `;
+}
+
+function renderGrades(){
+    const grades=['A+','A','B+'];
+    const cls=['ap','a','bp'];
+    document.getElementById('gradeGrid').innerHTML=grades.map((g,i)=>{
+        let gs=allSignals.filter(s=>s.grade===g);
+        let total=gs.length;
+        let th=gs.filter(s=>s.outcome==='target_hit').length;
+        let sh=gs.filter(s=>s.outcome==='stop_hit').length;
+        let res=th+sh;
+        let wr=res>0?((th/res)*100).toFixed(1):'-';
+        let scores=gs.map(s=>s.grade_score||s.score||0).filter(v=>v>0);
+        let avgSc=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'-';
+        let confs=gs.map(s=>s.probability||s.confidence_pct||0).filter(v=>v>0);
+        let avgConf=confs.length?(confs.reduce((a,b)=>a+b,0)/confs.length*100).toFixed(1):'-';
+        let pnls=gs.map(s=>parseFloat(s.pnl)||0).filter(v=>v!==0);
+        let tp=pnls.length?pnls.reduce((a,b)=>a+b,0).toFixed(2):'0';
+        return`<div class="grade-card">
+            <div class="gc-hdr"><span class="gc-grade ${cls[i]}">${g}</span><span class="gc-count">${total} signals</span></div>
+            <div class="gc-grid">
+                <div class="gc-item"><span class="gl">Win Rate</span><span class="gv ${parseFloat(wr)>=50?'pos':'neg'}">${wr}%</span></div>
+                <div class="gc-item"><span class="gl">Targets</span><span class="gv pos">${th}</span></div>
+                <div class="gc-item"><span class="gl">Stops</span><span class="gv neg">${sh}</span></div>
+                <div class="gc-item"><span class="gl">Avg Score</span><span class="gv">${avgSc}</span></div>
+                <div class="gc-item"><span class="gl">Avg Conf</span><span class="gv">${avgConf}%</span></div>
+                <div class="gc-item"><span class="gl">Total P&L</span><span class="gv ${parseFloat(tp)>=0?'pos':'neg'}">${tp}%</span></div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function renderTable(){
+    let start=(currentPage-1)*PER_PAGE;
+    let page=filtered.slice(start,start+PER_PAGE);
+    document.getElementById('tblCount').textContent=`${filtered.length} signals`;
+
+    if(page.length===0){
+        document.getElementById('tblBody').innerHTML='<tr><td colspan="15" class="empty">No signals found. Run a scan first.</td></tr>';
+        document.getElementById('pagination').innerHTML='';
+        return;
+    }
+
+    // Update sort indicators
+    document.querySelectorAll('thead th').forEach(th=>{
+        th.classList.remove('sorted-asc','sorted-desc');
+    });
+
+    document.getElementById('tblBody').innerHTML=page.map(s=>{
+        let dir=s.direction||s.signal_type||'';
+        let dirDisplay=dir==='LONG'||dir==='BUY'?'LONG':'SHORT';
+        let dirCls=dirDisplay==='LONG'?'long':'short';
+        let gCls=s.grade==='A+'?'ap':s.grade==='A'?'a':'bp';
+        let entry=s.entry||0;
+        let sl=s.stop_loss||0;
+        let tgt=s.target||0;
+        let rr=s.risk_reward||s.rr_ratio||0;
+        let conf=s.probability?((s.probability*100).toFixed(0)+'%'):(s.confidence||'-');
+        let trend=s.trend||'-';
+        let outcome=s.outcome||'pending';
+        let pnl=s.pnl||calcPnL(s);
+        let pnlCls=pnl===''?'neu':parseFloat(pnl)>0?'pos':parseFloat(pnl)<0?'neg':'neu';
+        let score=s.grade_score||s.score||0;
+
+        return`<tr>
+            <td>${s.scan_date||'-'}</td>
+            <td><span class="t-sym">${s.symbol}</span>${s.is_fno?'<span class="t-fno">FnO</span>':''}</td>
+            <td><span class="t-dir ${dirCls}">${dirDisplay}</span></td>
+            <td><span class="t-grade ${gCls}">${s.grade}</span></td>
+            <td>${score}</td>
+            <td><div class="m-dots">${modelDots(s)}</div></td>
+            <td class="t-en">₹${parseFloat(entry).toFixed(2)}</td>
+            <td class="t-sl">₹${parseFloat(sl).toFixed(2)}</td>
+            <td class="t-tg">₹${parseFloat(tgt).toFixed(2)}</td>
+            <td>${parseFloat(rr).toFixed(1)}</td>
+            <td>${conf}</td>
+            <td>${trend}</td>
+            <td><select class="t-outcome" onchange="updateOutcome('${s._id}',this.value)">
+                <option value="pending" ${outcome==='pending'?'selected':''}>⏳ Pending</option>
+                <option value="target_hit" ${outcome==='target_hit'?'selected':''}>✅ Target Hit</option>
+                <option value="stop_hit" ${outcome==='stop_hit'?'selected':''}>❌ Stop Hit</option>
+                <option value="expired" ${outcome==='expired'?'selected':''}>⏰ Expired</option>
+            </select></td>
+            <td><input class="t-exit" type="number" step="0.01" placeholder="Price" value="${s.exit_price||''}" onchange="updateExit('${s._id}',this.value)"></td>
+            <td><span class="t-pnl ${pnlCls}">${pnl?pnl+'%':'-'}</span></td>
+        </tr>`;
+    }).join('');
+
+    // Pagination
+    let totalPages=Math.ceil(filtered.length/PER_PAGE);
+    if(totalPages<=1){document.getElementById('pagination').innerHTML='';return}
+    let pgHTML='';
+    pgHTML+=`<button class="pg-btn" onclick="goPage(1)" ${currentPage===1?'disabled':''}>«</button>`;
+    pgHTML+=`<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+    let startP=Math.max(1,currentPage-2),endP=Math.min(totalPages,currentPage+2);
+    for(let p=startP;p<=endP;p++){
+        pgHTML+=`<button class="pg-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+    }
+    pgHTML+=`<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>›</button>`;
+    pgHTML+=`<button class="pg-btn" onclick="goPage(${totalPages})" ${currentPage===totalPages?'disabled':''}>»</button>`;
+    document.getElementById('pagination').innerHTML=pgHTML;
+}
+
+function goPage(p){currentPage=p;renderTable()}
+
+function render(){
+    renderStats();
+    renderGrades();
+    renderTable();
+}
+
+function exportCSV(){
+    if(filtered.length===0){alert('No data to export');return}
+    let headers=['Date','Symbol','FnO','Direction','Grade','Score','Entry','StopLoss','Target','RR','Confidence','Trend','Outcome','ExitPrice','PnL%'];
+    let rows=filtered.map(s=>{
+        let dir=s.direction||s.signal_type||'';
+        return[
+            s.scan_date||'',s.symbol||'',s.is_fno?'Yes':'No',dir,s.grade||'',
+            s.grade_score||s.score||'',s.entry||'',s.stop_loss||'',s.target||'',
+            s.risk_reward||s.rr_ratio||'',
+            s.probability?((s.probability*100).toFixed(1)+'%'):(s.confidence||''),
+            s.trend||'',s.outcome||'pending',s.exit_price||'',s.pnl||''
+        ].join(',');
+    });
+    let csv=headers.join(',')+'\n'+rows.join('\n');
+    let blob=new Blob([csv],{type:'text/csv'});
+    let url=URL.createObjectURL(blob);
+    let a=document.createElement('a');
+    a.href=url;a.download=`signal_history_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();URL.revokeObjectURL(url);
+}
+
+function clearAll(){
+    if(confirm('Delete ALL signal history? This cannot be undone.')){
+        allSignals=[];filtered=[];
+        localStorage.removeItem('signalHistory');
+        render();
+    }
+}
+
+// Init
+applyFilters();
+</script>
+</body>
+</html>
