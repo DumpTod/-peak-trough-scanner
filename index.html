@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Peak & Trough Scanner 📊</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f1eb;color:#2c3e50;min-height:100vh}
+:root{--steel:#5b8fa8;--dark:#34495e;--green:#27ae60;--red:#e74c3c;--gold:#f39c12;--purple:#8e44ad;--blue:#2980b9;--orange:#d35400;--gray:#8a9bae;--light:#fff;--border:rgba(91,143,168,.12)}
+
+/* HEADER */
+.header{background:linear-gradient(135deg,#34495e,#4a6d8c 40%,#5b8fa8 70%,#6fa3bd);padding:22px 30px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;box-shadow:0 4px 20px rgba(0,0,0,.15)}
+.header h1{font-size:24px;font-weight:800;color:#fff;text-shadow:0 0 15px rgba(255,255,255,.2)}
+.header p{color:#d5e8f2;font-size:11px;margin-top:3px}
+.header-right{display:flex;align-items:center;gap:10px;z-index:1}
+.api-input{padding:9px 14px;border-radius:7px;border:1.5px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);color:#fff;font-size:12px;width:340px;outline:none;backdrop-filter:blur(10px)}
+.api-input:focus{border-color:#fff;box-shadow:0 0 10px rgba(255,255,255,.2)}
+.api-input::placeholder{color:rgba(255,255,255,.5)}
+.scan-btn{padding:9px 26px;border-radius:7px;border:none;background:linear-gradient(135deg,#2ecc71,#27ae60);color:#fff;font-weight:700;font-size:12px;cursor:pointer;text-transform:uppercase;letter-spacing:1.2px;box-shadow:0 4px 12px rgba(46,204,113,.3);transition:.3s}
+.scan-btn:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(46,204,113,.4)}
+.scan-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.scan-btn.scanning{animation:sp 1.5s ease-in-out infinite}
+@keyframes sp{0%,100%{box-shadow:0 4px 12px rgba(46,204,113,.3)}50%{box-shadow:0 4px 25px rgba(46,204,113,.6)}}
+
+/* STATUS */
+.status-bar{display:flex;justify-content:space-between;align-items:center;padding:9px 30px;background:var(--light);border-bottom:1px solid #ddd;flex-wrap:wrap;gap:6px;box-shadow:0 1px 3px rgba(0,0,0,.03)}
+.status-left{display:flex;align-items:center;gap:7px}
+.s-dot{width:9px;height:9px;border-radius:50%;background:#f0ad4e;box-shadow:0 0 5px rgba(240,173,78,.4);transition:.3s}
+.s-dot.ok{background:var(--green);box-shadow:0 0 5px rgba(39,174,96,.4)}
+.s-dot.err{background:var(--red);box-shadow:0 0 5px rgba(231,76,60,.4)}
+.s-dot.scan{background:var(--steel);animation:dp 1s infinite}
+@keyframes dp{0%,100%{opacity:1}50%{opacity:.3}}
+.s-txt{font-size:11px;color:#6b7b8d}
+.status-right{display:flex;gap:16px;font-size:10px;color:var(--gray)}
+.status-right span{display:flex;align-items:center;gap:4px}
+
+/* LEGEND */
+.legend{display:flex;justify-content:center;align-items:center;padding:10px 30px;background:var(--light);border-bottom:1px solid #e8e8e8;flex-wrap:wrap;gap:12px}
+.legend-item{display:flex;align-items:center;gap:4px;font-size:9px;color:#6b7b8d}
+.lt{padding:2px 6px;border-radius:3px;font-weight:700;font-size:8px;letter-spacing:.3px}
+.lt.z{background:rgba(52,152,219,.1);color:var(--blue);border:1px solid rgba(52,152,219,.2)}
+.lt.w{background:rgba(142,68,173,.1);color:var(--purple);border:1px solid rgba(142,68,173,.2)}
+.lt.v{background:rgba(211,84,0,.1);color:var(--orange);border:1px solid rgba(211,84,0,.2)}
+.lt.m{background:rgba(39,174,96,.1);color:var(--green);border:1px solid rgba(39,174,96,.2)}
+.lt.t{background:rgba(243,156,18,.1);color:var(--gold);border:1px solid rgba(243,156,18,.2)}
+.l-rule{font-size:9px;color:var(--steel);font-weight:600;padding-left:8px;border-left:2px solid var(--steel)}
+
+/* GRID */
+.main-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;padding:18px 30px;max-width:1600px;margin:0 auto}
+.sig-col{background:var(--light);border-radius:11px;border:1px solid #e0e0e0;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 2px 10px rgba(0,0,0,.03)}
+.col-hdr{padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid}
+.col-hdr.buy{background:linear-gradient(135deg,rgba(39,174,96,.05),transparent);border-color:var(--green)}
+.col-hdr.sell{background:linear-gradient(135deg,rgba(231,76,60,.05),transparent);border-color:var(--red)}
+.col-title{font-size:14px;font-weight:700;letter-spacing:.6px}
+.col-title.buy{color:var(--green)}.col-title.sell{color:var(--red)}
+.sig-cnt{padding:2px 10px;border-radius:14px;font-size:10px;font-weight:700}
+.sig-cnt.buy{background:rgba(39,174,96,.08);color:var(--green);border:1px solid rgba(39,174,96,.15)}
+.sig-cnt.sell{background:rgba(231,76,60,.08);color:var(--red);border:1px solid rgba(231,76,60,.15)}
+.col-body{padding:12px;flex:1;overflow-y:auto;max-height:75vh}
+
+/* TIER HEADERS */
+.tier-header{padding:8px 12px;margin:8px 0 6px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;display:flex;align-items:center;gap:6px}
+.tier-header.t1{background:linear-gradient(90deg,rgba(39,174,96,.08),transparent);color:var(--green);border-left:3px solid var(--green)}
+.tier-header.t2{background:linear-gradient(90deg,rgba(52,152,219,.08),transparent);color:var(--blue);border-left:3px solid var(--blue)}
+.tier-header.t3{background:linear-gradient(90deg,rgba(52,152,219,.06),transparent);color:var(--blue);border-left:3px solid rgba(52,152,219,.5)}
+.tier-header.t4{background:linear-gradient(90deg,rgba(243,156,18,.06),transparent);color:var(--gold);border-left:3px solid var(--gold)}
+.tier-header.t5{background:linear-gradient(90deg,rgba(243,156,18,.04),transparent);color:var(--orange);border-left:3px solid var(--orange)}
+.tier-badge{padding:1px 6px;border-radius:3px;font-size:8px;background:rgba(0,0,0,.04)}
+
+/* CARDS */
+.stock-card{background:rgba(255,255,255,.7);backdrop-filter:blur(10px);border:1px solid rgba(91,143,168,.12);border-radius:10px;padding:14px;margin-bottom:10px;cursor:pointer;transition:.3s;position:relative}
+.stock-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--steel),transparent);opacity:0;transition:.3s}
+.stock-card:hover{border-color:var(--steel);transform:translateY(-2px);box-shadow:0 6px 20px rgba(91,143,168,.1)}
+.stock-card:hover::before{opacity:1}
+.card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.c-sym-grp{display:flex;align-items:center;gap:7px}
+.c-sym{font-size:16px;font-weight:800;color:var(--dark)}
+.fno{padding:1px 6px;border-radius:3px;font-size:7px;font-weight:700;background:rgba(243,156,18,.08);color:#e67e22;border:1px solid rgba(243,156,18,.2)}
+.grade{padding:3px 10px;border-radius:6px;font-weight:800;font-size:12px;letter-spacing:.6px}
+.g-ap{background:linear-gradient(135deg,rgba(39,174,96,.1),rgba(46,204,113,.05));color:var(--green);border:1.5px solid rgba(46,204,113,.3);box-shadow:0 0 8px rgba(46,204,113,.08)}
+.g-a{background:rgba(52,152,219,.08);color:var(--blue);border:1.5px solid rgba(52,152,219,.25)}
+.g-bp{background:rgba(243,156,18,.07);color:#e67e22;border:1.5px solid rgba(243,156,18,.2)}
+.g-b{background:rgba(211,84,0,.06);color:var(--orange);border:1.5px solid rgba(211,84,0,.18)}
+.g-c{background:rgba(149,165,166,.06);color:#7f8c8d;border:1.5px solid rgba(149,165,166,.18)}
+
+/* MODEL TAGS */
+.m-tags{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
+.mt{padding:2px 7px;border-radius:3px;font-size:8px;font-weight:700;letter-spacing:.3px}
+.mt.a.z{background:rgba(52,152,219,.12);color:var(--blue);border:1px solid rgba(52,152,219,.25)}
+.mt.a.w{background:rgba(142,68,173,.12);color:var(--purple);border:1px solid rgba(142,68,173,.25)}
+.mt.a.v{background:rgba(211,84,0,.12);color:var(--orange);border:1px solid rgba(211,84,0,.25)}
+.mt.a.m{background:rgba(39,174,96,.12);color:var(--green);border:1px solid rgba(39,174,96,.25)}
+.mt.a.t{background:rgba(243,156,18,.12);color:var(--gold);border:1px solid rgba(243,156,18,.25)}
+.mt.i{background:rgba(0,0,0,.02);color:#bdc3c7;border:1px solid rgba(0,0,0,.05)}
+.m-cnt{font-size:8px;color:var(--gray);margin-left:2px}
+
+/* PRICE */
+.p-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:10px}
+.p-box{background:rgba(91,143,168,.03);border-radius:6px;padding:7px;text-align:center;border:1px solid var(--border)}
+.p-box .lb{font-size:7px;color:var(--gray);text-transform:uppercase;letter-spacing:.6px;margin-bottom:2px}
+.p-box .vl{font-size:13px;font-weight:700}
+.p-box.en .vl{color:var(--steel)}.p-box.sl .vl{color:var(--red)}.p-box.tg .vl{color:var(--green)}
+
+/* METRICS */
+.met-row{display:flex;gap:5px;flex-wrap:wrap}
+.met{padding:3px 8px;border-radius:4px;font-size:9px;font-weight:600;background:rgba(91,143,168,.03);border:1px solid var(--border);display:flex;align-items:center;gap:3px}
+.met .ml{color:var(--gray);font-size:7px;text-transform:uppercase;letter-spacing:.3px}
+.met .mv{font-weight:700}
+.mv.rr{color:var(--blue)}.mv.ch{color:var(--green)}.mv.cm{color:var(--gold)}.mv.cl{color:var(--orange)}.mv.cn{color:#95a5a6}.mv.wr{color:var(--purple)}.mv.sc{color:var(--steel)}
+
+/* TRADE BTNS */
+.t-btns{display:flex;gap:6px;margin:8px 0 2px}
+.t-btn{padding:4px 14px;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer;border:1.5px solid;transition:.3s;letter-spacing:.4px}
+.t-btn.tk{background:rgba(39,174,96,.06);color:var(--green);border-color:rgba(39,174,96,.25)}
+.t-btn.tk:hover,.t-btn.tk.on{background:var(--green);color:#fff}
+.t-btn.nt{background:rgba(231,76,60,.06);color:var(--red);border-color:rgba(231,76,60,.25)}
+.t-btn.nt:hover,.t-btn.nt.on{background:var(--red);color:#fff}
+
+/* DETAILS */
+.c-det{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.c-det.exp{display:block;animation:sd .3s ease}
+@keyframes sd{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.d-sec{margin-bottom:10px}
+.d-sec-t{font-size:9px;font-weight:700;color:var(--steel);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;padding-bottom:2px;border-bottom:1px solid var(--border)}
+.d-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.d-item{display:flex;justify-content:space-between;padding:4px 7px;background:rgba(91,143,168,.02);border-radius:4px;font-size:9px}
+.d-item .dl{color:var(--gray)}.d-item .dv{color:var(--dark);font-weight:600}
+.dv.pos{color:var(--green)}.dv.neg{color:var(--red)}.dv.neu{color:var(--gold)}
+
+/* EXHAUSTION BAR */
+.ex-bar{margin:6px 0;padding:6px 7px;background:rgba(91,143,168,.02);border-radius:6px}
+.ex-lbl{font-size:8px;color:var(--gray);margin-bottom:4px;display:flex;justify-content:space-between}
+.ex-b{height:6px;background:rgba(0,0,0,.04);border-radius:3px;overflow:hidden;display:flex;gap:1px}
+.ex-s{height:100%;border-radius:2px}
+.ex-s.z{background:#3498db}.ex-s.w{background:#9b59b6}.ex-s.v{background:#e67e22}.ex-s.m{background:#2ecc71}
+
+/* EMPTY/ERROR */
+.empty{text-align:center;padding:45px 18px;color:#bdc3c7}
+.empty .ei{font-size:38px;margin-bottom:12px;opacity:.4}
+.empty h3{font-size:14px;color:#7f8c8d;margin-bottom:5px}
+.empty p{font-size:10px;color:#95a5a6;line-height:1.4}
+.err{text-align:center;padding:30px 18px}
+.err h3{color:var(--red);font-size:14px;margin-bottom:8px}
+.err .ts{text-align:left;background:rgba(231,76,60,.02);border:1px solid rgba(231,76,60,.1);border-radius:7px;padding:12px;margin-top:8px}
+.err .ts p{font-size:10px;color:#6b7b8d;margin-bottom:4px;padding-left:8px}
+.err .ts p::before{content:'→ ';color:var(--red)}
+
+/* LOADING */
+.ld-ov{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(244,241,235,.94);z-index:9999;justify-content:center;align-items:center;flex-direction:column;backdrop-filter:blur(8px)}
+.ld-ov.on{display:flex}
+.spinner{width:45px;height:45px;border:3px solid rgba(91,143,168,.12);border-top:3px solid var(--steel);border-right:3px solid var(--purple);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:18px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ld-t{font-size:15px;font-weight:700;color:var(--dark);margin-bottom:5px}
+.ld-s{font-size:10px;color:var(--gray);text-align:center;line-height:1.4}
+
+/* JOURNAL */
+.j-sec{padding:18px 30px;max-width:1600px;margin:0 auto}
+.j-con{background:rgba(255,255,255,.75);backdrop-filter:blur(14px);border-radius:12px;border:1px solid var(--border);box-shadow:0 6px 28px rgba(91,143,168,.06);overflow:hidden}
+.j-hdr{padding:14px 20px;background:linear-gradient(135deg,rgba(91,143,168,.06),transparent);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.j-title{font-size:14px;font-weight:800;color:var(--dark)}
+.j-cnt{padding:2px 10px;border-radius:14px;font-size:10px;font-weight:700;background:rgba(91,143,168,.06);color:var(--steel);border:1px solid var(--border)}
+.j-wrap{overflow-x:auto;padding:3px}
+.j-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:10px}
+.j-tbl thead th{background:rgba(91,143,168,.04);color:var(--steel);font-weight:700;text-transform:uppercase;letter-spacing:.5px;font-size:8px;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);position:sticky;top:0}
+.j-tbl tbody tr{transition:.2s}
+.j-tbl tbody tr:hover{background:rgba(91,143,168,.03)}
+.j-tbl tbody td{padding:7px 10px;border-bottom:1px solid rgba(0,0,0,.03);color:var(--dark);vertical-align:middle}
+.j-sym{font-weight:700;color:var(--dark)}
+.j-fno{font-size:7px;padding:1px 4px;border-radius:2px;background:rgba(243,156,18,.08);color:#e67e22;border:1px solid rgba(243,156,18,.15);margin-left:3px}
+.j-en{color:var(--steel);font-weight:600}.j-sl{color:var(--red);font-weight:600}.j-tg{color:var(--green);font-weight:600}
+.j-inp{padding:4px 6px;border:1px solid rgba(91,143,168,.15);border-radius:4px;font-size:10px;width:75px;background:rgba(255,255,255,.8);color:var(--dark);outline:none;transition:.2s}
+.j-inp:focus{border-color:var(--steel);box-shadow:0 0 5px rgba(91,143,168,.12)}
+.j-di{width:90px}
+.j-res{padding:2px 8px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.2px}
+.j-res.profit{background:rgba(39,174,96,.08);color:var(--green);border:1px solid rgba(39,174,96,.15)}
+.j-res.loss{background:rgba(231,76,60,.08);color:var(--red);border:1px solid rgba(231,76,60,.15)}
+.j-res.pending{background:rgba(243,156,18,.06);color:var(--gold);border:1px solid rgba(243,156,18,.12)}
+.j-rm{background:none;border:1px solid rgba(231,76,60,.15);color:var(--red);padding:2px 6px;border-radius:3px;cursor:pointer;font-size:9px;transition:.2s}
+.j-rm:hover{background:var(--red);color:#fff}
+.j-empty{text-align:center;padding:35px;color:#bdc3c7;font-size:11px}
+
+/* ANALYTICS */
+.a-sec{padding:0 30px 18px;max-width:1600px;margin:0 auto}
+.a-con{background:rgba(255,255,255,.65);backdrop-filter:blur(18px);border-radius:12px;border:1px solid var(--border);box-shadow:0 6px 35px rgba(91,143,168,.05);overflow:hidden}
+.a-hdr{padding:14px 20px;background:linear-gradient(135deg,rgba(91,143,168,.05),transparent);border-bottom:1px solid var(--border)}
+.a-title{font-size:14px;font-weight:800;color:var(--dark)}
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;padding:16px 20px}
+.kpi{background:rgba(255,255,255,.55);backdrop-filter:blur(10px);border-radius:10px;border:1px solid var(--border);padding:14px 12px;text-align:center;transition:.3s;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:3px 3px 0 0}
+.kpi:nth-child(1)::before{background:linear-gradient(90deg,#27ae60,#2ecc71)}
+.kpi:nth-child(2)::before{background:linear-gradient(90deg,#2980b9,#3498db)}
+.kpi:nth-child(3)::before{background:linear-gradient(90deg,#27ae60,#2ecc71)}
+.kpi:nth-child(4)::before{background:linear-gradient(90deg,#e74c3c,#c0392b)}
+.kpi:nth-child(5)::before{background:linear-gradient(90deg,#8e44ad,#9b59b6)}
+.kpi:nth-child(6)::before{background:linear-gradient(90deg,#f39c12,#e67e22)}
+.kpi:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(91,143,168,.08)}
+.kpi-l{font-size:8px;color:var(--gray);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+.kpi-v{font-size:22px;font-weight:800;color:var(--dark)}.kpi-v.pos{color:var(--green)}.kpi-v.neg{color:var(--red)}
+.kpi-s{font-size:8px;color:var(--gray);margin-top:3px}
+.ch-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 20px 20px}
+.ch-card{background:rgba(255,255,255,.45);backdrop-filter:blur(12px);border-radius:10px;border:1px solid rgba(91,143,168,.06);padding:16px;box-shadow:0 3px 16px rgba(91,143,168,.04),inset 0 1px 0 rgba(255,255,255,.5);transition:.3s}
+.ch-card:hover{box-shadow:0 6px 25px rgba(91,143,168,.08),inset 0 1px 0 rgba(255,255,255,.7)}
+.ch-t{font-size:10px;font-weight:700;color:var(--steel);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.ch-cv{width:100%;height:180px;position:relative;border-radius:7px;overflow:hidden;background:rgba(91,143,168,.015)}
+.bar-ch{display:flex;align-items:flex-end;justify-content:center;gap:6px;height:100%;padding:8px 8px 22px}
+.bar-g{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;max-width:50px}
+.bar{border-radius:3px 3px 0 0;transition:.5s;min-width:16px;position:relative;cursor:pointer;box-shadow:0 -2px 6px rgba(0,0,0,.04)}
+.bar:hover{opacity:.85}.bar.pb{background:linear-gradient(180deg,#2ecc71,#27ae60)}.bar.lb{background:linear-gradient(180deg,#e74c3c,#c0392b)}.bar.nb{background:linear-gradient(180deg,#95a5a6,#7f8c8d)}
+.bar-l{font-size:7px;color:var(--gray);text-align:center;position:absolute;bottom:-16px;width:max-content}
+.don-con{display:flex;align-items:center;justify-content:center;gap:24px;height:100%;padding:8px}
+.donut{width:130px;height:130px;border-radius:50%;position:relative;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 16px rgba(0,0,0,.05),inset 0 2px 3px rgba(255,255,255,.4)}
+.don-c{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.8);backdrop-filter:blur(6px);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1;box-shadow:inset 0 1px 6px rgba(0,0,0,.03)}
+.don-p{font-size:20px;font-weight:800;color:var(--dark)}.don-s{font-size:7px;color:var(--gray);text-transform:uppercase;letter-spacing:.4px}
+.don-leg{display:flex;flex-direction:column;gap:6px}
+.don-li{display:flex;align-items:center;gap:5px;font-size:10px;color:#6b7b8d}
+.don-dot{width:8px;height:8px;border-radius:2px}
+.eq-line{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 2px 3px rgba(91,143,168,.15))}
+.eq-area{opacity:.25}.eq-gl{stroke:rgba(91,143,168,.06);stroke-width:.5}
+.str-con{display:flex;flex-direction:column;gap:5px;height:100%;justify-content:center;padding:8px 12px}
+.str-row{display:flex;align-items:center;gap:6px}
+.str-l{font-size:9px;color:var(--gray);width:60px;text-align:right}
+.str-bg{flex:1;height:16px;background:rgba(0,0,0,.03);border-radius:3px;overflow:hidden}
+.str-f{height:100%;border-radius:3px;transition:.8s;display:flex;align-items:center;justify-content:flex-end;padding-right:5px;font-size:8px;font-weight:700;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.15)}
+.str-f.wn{background:linear-gradient(90deg,#27ae60,#2ecc71)}.str-f.ls{background:linear-gradient(90deg,#e74c3c,#c0392b)}.str-f.cu{background:linear-gradient(90deg,#5b8fa8,#6fa3bd)}
+
+/* SCROLLBAR */
+.col-body::-webkit-scrollbar{width:4px}
+.col-body::-webkit-scrollbar-track{background:#f4f1eb}
+.col-body::-webkit-scrollbar-thumb{background:#d5d0c8;border-radius:2px}
+.col-body::-webkit-scrollbar-thumb:hover{background:var(--steel)}
+
+/* FOOTER */
+.footer{text-align:center;padding:16px 30px;background:var(--light);border-top:1px solid #e8e8e8;margin-top:18px}
+.footer p{font-size:9px;color:#95a5a6;line-height:1.6}
+.footer .ver{color:var(--steel);font-weight:700}
+
+/* RESPONSIVE */
+@media(max-width:1000px){.main-grid,.ch-grid{grid-template-columns:1fr}.kpi-grid{grid-template-columns:repeat(3,1fr)}.header{padding:16px;flex-direction:column;align-items:flex-start}.header-right{width:100%;flex-direction:column}.api-input{width:100%}.scan-btn{width:100%;text-align:center}.status-bar{padding:8px 14px;flex-direction:column}.legend{padding:8px 14px}.j-sec,.a-sec{padding:8px 14px}.col-body{max-height:60vh}.d-grid{grid-template-columns:1fr}}
+@media(max-width:600px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.p-grid{grid-template-columns:1fr}.met-row{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<div class="ld-ov" id="lo"><div class="spinner"></div><div class="ld-t">Scanning Peak & Trough Structures...</div><div class="ld-s">Z-Score · Wick · Volume · Momentum · MTF<br>Backtesting across NSE stocks · 15-30 min full scan</div></div>
+
+<div class="header">
+<div><h1>📊 PEAK & TROUGH SCANNER</h1><p>Liquidity Grab Detection · Mean Reversion · Statistical Validation</p></div>
+<div class="header-right">
+<input type="text" class="api-input" id="apiUrl" placeholder="Paste Cloudflare tunnel URL (e.g. https://xxx.trycloudflare.com)">
+<button class="scan-btn" id="scanBtn" onclick="runScan()">SCAN NOW</button>
+</div>
+</div>
+
+<div class="status-bar">
+<div class="status-left"><div class="s-dot" id="sDot"></div><span class="s-txt" id="sTxt">Ready — Enter API URL and click SCAN NOW</span></div>
+<div class="status-right"><span>🕐 Last: <strong id="lScan">Never</strong></span><span>📊 Stocks: <strong id="sCnt">0</strong></span></div>
+</div>
+
+<div class="legend">
+<div class="legend-item"><span class="lt z">Z-SCR</span><span>Z-Score</span></div>
+<div class="legend-item"><span class="lt w">WICK</span><span>Liquidity Grab</span></div>
+<div class="legend-item"><span class="lt v">VOL</span><span>Volume Spike</span></div>
+<div class="legend-item"><span class="lt m">MOM</span><span>Momentum</span></div>
+<div class="legend-item"><span class="lt t">MTF</span><span>Multi-TF</span></div>
+<div class="l-rule">Exhaustion ≥ 30 + Prob ≥ 35%</div>
+</div>
+
+<div class="main-grid">
+<div class="sig-col"><div class="col-hdr buy"><span class="col-title buy">🟢 TROUGH BUY SIGNALS</span><span class="sig-cnt buy" id="bCnt">0 signals</span></div><div class="col-body" id="bCol"><div class="empty"><div class="ei">📉</div><h3>No Buy Signals Yet</h3><p>Enter API URL and click SCAN NOW</p></div></div></div>
+<div class="sig-col"><div class="col-hdr sell"><span class="col-title sell">🔴 PEAK SELL SIGNALS (FnO Only)</span><span class="sig-cnt sell" id="sCntS">0 signals</span></div><div class="col-body" id="sCol"><div class="empty"><div class="ei">📈</div><h3>No Sell Signals Yet</h3><p>Sell signals for FnO stocks with peak exhaustion</p></div></div></div>
+</div>
+
+<div class="j-sec"><div class="j-con">
+<div class="j-hdr"><span class="j-title">📋 Trade Journal</span><span class="j-cnt" id="jCnt">0 trades</span></div>
+<div class="j-wrap"><table class="j-tbl" id="jTbl"><thead><tr><th>Date</th><th>Symbol</th><th>Dir</th><th>Entry ₹</th><th>SL ₹</th><th>Target ₹</th><th>Actual ₹</th><th>Result</th><th>Close Date</th><th>✕</th></tr></thead><tbody id="jBody"><tr><td colspan="10" class="j-empty">No trades taken yet. Click "Taken" on any signal.</td></tr></tbody></table></div>
+</div></div>
+
+<div class="a-sec" id="aSec" style="display:none"><div class="a-con">
+<div class="a-hdr"><span class="a-title">📈 Performance Analytics</span></div>
+<div class="kpi-grid" id="kGrid"></div>
+<div class="ch-grid">
+<div class="ch-card"><div class="ch-t">Win / Loss Distribution</div><div class="ch-cv" id="dCh"></div></div>
+<div class="ch-card"><div class="ch-t">Trade PnL (Recent 10)</div><div class="ch-cv" id="pCh"></div></div>
+<div class="ch-card"><div class="ch-t">Cumulative PnL Curve</div><div class="ch-cv" id="eCh"></div></div>
+<div class="ch-card"><div class="ch-t">Win / Loss Streaks</div><div class="ch-cv" id="sCh"></div></div>
+</div>
+</div></div>
+
+<div class="footer"><p><span class="ver">Peak & Trough Scanner v1.0</span><br>Z-Score · Wick · Volume · Momentum · MTF | Exhaustion ≥ 30 + Prob ≥ 35% + R:R ≥ 1.0</p></div>
+
+<script>
+let jTrades=JSON.parse(localStorage.getItem('ptJ')||'[]');
+function saveJ(){localStorage.setItem('ptJ',JSON.stringify(jTrades));renderJ();renderA()}
+function addJ(sym,fno,dir,en,sl,tg){jTrades.push({id:Date.now(),dt:new Date().toLocaleDateString('en-IN'),sym,fno,dir,en:parseFloat(en),sl:parseFloat(sl),tg:parseFloat(tg),act:'',res:'pending',cd:''});saveJ()}
+function rmJ(id){jTrades=jTrades.filter(t=>t.id!==id);saveJ()}
+function updAct(id,v){let t=jTrades.find(x=>x.id===id);if(!t)return;t.act=v;let a=parseFloat(v);if(!isNaN(a)){t.res=t.dir==='LONG'?(a>=t.tg?'profit':a<=t.sl?'loss':'pending'):(a<=t.tg?'profit':a>=t.sl?'loss':'pending')}else t.res='pending';saveJ()}
+function updCD(id,v){let t=jTrades.find(x=>x.id===id);if(t){t.cd=v;saveJ()}}
+
+function renderJ(){
+let tb=document.getElementById('jBody'),c=document.getElementById('jCnt');
+c.textContent=`${jTrades.length} trade${jTrades.length!==1?'s':''}`;
+if(!jTrades.length){tb.innerHTML='<tr><td colspan="10" class="j-empty">No trades taken yet. Click "Taken" on any signal.</td></tr>';return}
+tb.innerHTML=jTrades.map(t=>`<tr><td>${t.dt}</td><td><span class="j-sym">${t.sym}</span>${t.fno?'<span class="j-fno">FnO</span>':''}</td><td style="color:${t.dir==='LONG'?'var(--green)':'var(--red)'};font-weight:700">${t.dir==='LONG'?'🟢 LONG':'🔴 SHORT'}</td><td class="j-en">₹${t.en.toFixed(2)}</td><td class="j-sl">₹${t.sl.toFixed(2)}</td><td class="j-tg">₹${t.tg.toFixed(2)}</td><td><input class="j-inp" type="number" step="0.01" placeholder="Price.." value="${t.act}" onchange="updAct(${t.id},this.value)"></td><td><span class="j-res ${t.res}">${t.res==='profit'?'✅ PROFIT':t.res==='loss'?'❌ LOSS':'⏳ PENDING'}</span></td><td><input class="j-inp j-di" type="text" placeholder="DD/MM/YY" value="${t.cd}" onchange="updCD(${t.id},this.value)"></td><td><button class="j-rm" onclick="rmJ(${t.id})">✕</button></td></tr>`).join('')}
+
+function renderA(){
+let sec=document.getElementById('aSec'),comp=jTrades.filter(t=>t.res!=='pending');
+if(comp.length<1){sec.style.display='none';return}sec.style.display='block';
+let w=comp.filter(t=>t.res==='profit'),l=comp.filter(t=>t.res==='loss'),tot=comp.length,wr=tot>0?((w.length/tot)*100).toFixed(1):0;
+let pnls=comp.map(t=>{let a=parseFloat(t.act)||0;return t.dir==='LONG'?((a-t.en)/t.en*100):((t.en-a)/t.en*100)});
+let avg=pnls.length?(pnls.reduce((a,b)=>a+b,0)/pnls.length).toFixed(2):0,totP=pnls.reduce((a,b)=>a+b,0).toFixed(2);
+let aW=w.length?(pnls.filter(p=>p>0).reduce((a,b)=>a+b,0)/w.length).toFixed(2):0;
+let aL=l.length?Math.abs(pnls.filter(p=>p<=0).reduce((a,b)=>a+b,0)/l.length).toFixed(2):0;
+let mW=0,mL=0,cW=0,cL=0,cS=0,cT='';
+comp.forEach(t=>{if(t.res==='profit'){cW++;cL=0;mW=Math.max(mW,cW);cS=cW;cT='win'}else{cL++;cW=0;mL=Math.max(mL,cL);cS=cL;cT='loss'}});
+document.getElementById('kGrid').innerHTML=`
+<div class="kpi"><div class="kpi-l">Total Trades</div><div class="kpi-v">${tot}</div><div class="kpi-s">${w.length}W / ${l.length}L</div></div>
+<div class="kpi"><div class="kpi-l">Win Rate</div><div class="kpi-v ${parseFloat(wr)>=50?'pos':'neg'}">${wr}%</div><div class="kpi-s">Target: ≥50%</div></div>
+<div class="kpi"><div class="kpi-l">Total PnL</div><div class="kpi-v ${parseFloat(totP)>=0?'pos':'neg'}">${totP}%</div><div class="kpi-s">Cumulative</div></div>
+<div class="kpi"><div class="kpi-l">Avg Win</div><div class="kpi-v pos">+${aW}%</div><div class="kpi-s">Per win</div></div>
+<div class="kpi"><div class="kpi-l">Avg Loss</div><div class="kpi-v neg">-${aL}%</div><div class="kpi-s">Per loss</div></div>
+<div class="kpi"><div class="kpi-l">Streaks</div><div class="kpi-v">${mW}W/${mL}L</div><div class="kpi-s">Current: ${cS} ${cT}</div></div>`;
+rDonut(w.length,l.length,wr);rBars(pnls,comp);rEquity(pnls);rStreak(mW,mL,cS,cT)}
+
+function rDonut(w,l,wr){let t=w+l,d=t>0?(w/t*360):0;document.getElementById('dCh').innerHTML=`<div class="don-con"><div class="donut" style="background:conic-gradient(var(--green) 0deg ${d}deg,var(--red) ${d}deg 360deg)"><div class="don-c"><div class="don-p">${wr}%</div><div class="don-s">Win Rate</div></div></div><div class="don-leg"><div class="don-li"><div class="don-dot" style="background:var(--green)"></div>Wins: ${w}</div><div class="don-li"><div class="don-dot" style="background:var(--red)"></div>Losses: ${l}</div><div class="don-li"><div class="don-dot" style="background:var(--steel)"></div>Total: ${t}</div></div></div>`}
+
+function rBars(pnls,comp){let r=pnls.slice(-10),rc=comp.slice(-10),mx=Math.max(...r.map(Math.abs),1),h='<div class="bar-ch">';r.forEach((p,i)=>{let ht=Math.max(6,(Math.abs(p)/mx)*140),c=p>0?'pb':p<0?'lb':'nb',s=rc[i]?rc[i].sym.slice(0,5):'';h+=`<div class="bar-g"><div class="bar ${c}" style="height:${ht}px" title="${p.toFixed(2)}%"><span class="bar-l">${s}</span></div></div>`});document.getElementById('pCh').innerHTML=h+'</div>'}
+
+function rEquity(pnls){if(pnls.length<2){document.getElementById('eCh').innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--gray);font-size:11px">Need 2+ trades</div>';return}
+let cum=[0];pnls.forEach(p=>cum.push(cum[cum.length-1]+p));let w=400,h=160,pd=18,mn=Math.min(...cum),mx=Math.max(...cum),rg=mx-mn||1;
+let pts=cum.map((v,i)=>{let x=pd+(i/(cum.length-1))*(w-2*pd),y=h-pd-((v-mn)/rg)*(h-2*pd);return`${x},${y}`});
+let ap=pts.join(' ')+` ${pd+((cum.length-1)/(cum.length-1))*(w-2*pd)},${h-pd} ${pd},${h-pd}`;
+let gl=[0,1,2,3].map(i=>{let y=pd+(i/3)*(h-2*pd);return`<line x1="${pd}" y1="${y}" x2="${w-pd}" y2="${y}" class="eq-gl"/>`}).join('');
+let lv=cum[cum.length-1],cl=lv>=0?'var(--green)':'var(--red)';
+document.getElementById('eCh').innerHTML=`<svg viewBox="0 0 ${w} ${h}" width="100%" height="100%"><defs><linearGradient id="eg" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="${cl}" stop-opacity="0.4"/><stop offset="100%" stop-color="${cl}"/></linearGradient><linearGradient id="ea" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${cl}" stop-opacity="0.2"/><stop offset="100%" stop-color="${cl}" stop-opacity="0.01"/></linearGradient></defs>${gl}<polygon points="${ap}" fill="url(#ea)" class="eq-area"/><polyline points="${pts.join(' ')}" class="eq-line" style="stroke:url(#eg)"/>${cum.map((v,i)=>{let x=pd+(i/(cum.length-1))*(w-2*pd),y=h-pd-((v-mn)/rg)*(h-2*pd);return`<circle cx="${x}" cy="${y}" r="2.5" fill="${cl}" opacity="0.6"/>`}).join('')}</svg>`}
+
+function rStreak(mW,mL,cS,cT){let mx=Math.max(mW,mL,cS,1);document.getElementById('sCh').innerHTML=`<div class="str-con"><div class="str-row"><span class="str-l">Best Win</span><div class="str-bg"><div class="str-f wn" style="width:${(mW/mx)*100}%">${mW}</div></div></div><div class="str-row"><span class="str-l">Worst Loss</span><div class="str-bg"><div class="str-f ls" style="width:${(mL/mx)*100}%">${mL}</div></div></div><div class="str-row"><span class="str-l">Current</span><div class="str-bg"><div class="str-f cu" style="width:${(cS/mx)*100}%">${cS} ${cT}</div></div></div></div>`}
+
+// CARD HELPERS
+function gGC(g){return g==='A+'?'g-ap':g==='A'?'g-a':g==='B+'?'g-bp':g==='B'?'g-b':'g-c'}
+function gCC(p){return p>=.65?{c:'ch',l:'HIGH'}:p>=.5?{c:'cm',l:'MED'}:p>=.35?{c:'cl',l:'LOW'}:{c:'cn',l:'NEW'}}
+
+function cMT(s){
+let c=s.exhaustion_components||{},mdls=[{k:'zscore_component',cd:'Z-SCR',cl:'z',th:5},{k:'wick_component',cd:'WICK',cl:'w',th:5},{k:'volume_component',cd:'VOL',cl:'v',th:5},{k:'momentum_component',cd:'MOM',cl:'m',th:5},{k:'mtf',cd:'MTF',cl:'t',th:null}],ac=0,h='';
+mdls.forEach(m=>{let a=m.k==='mtf'?s.mtf_confirmed===true:(c[m.k]||0)>=m.th;if(a)ac++;h+=`<span class="mt ${a?'a '+m.cl:'i'}">${m.cd}</span>`});
+return{html:h+`<span class="m-cnt">${ac}/5</span>`,count:ac}}
+
+function cEB(c){if(!c)return'';let t=(c.zscore_component||0)+(c.wick_component||0)+(c.volume_component||0)+(c.momentum_component||0);if(!t)return'';return`<div class="ex-bar"><div class="ex-lbl"><span>Exhaustion</span><span>${t.toFixed(1)}/100</span></div><div class="ex-b"><div class="ex-s z" style="width:${c.zscore_component||0}%"></div><div class="ex-s w" style="width:${c.wick_component||0}%"></div><div class="ex-s v" style="width:${c.volume_component||0}%"></div><div class="ex-s m" style="width:${c.momentum_component||0}%"></div></div></div>`}
+
+function cSC(s,type){
+let cf=gCC(s.probability),bt=s.backtest||{},co=s.exhaustion_components||{},dir=type==='long'?'LONG':'SHORT';
+let ws=bt.total_trades?Math.round(bt.total_trades*(bt.win_rate||0)/100):0,ls=bt.total_trades?bt.total_trades-ws:0;
+let mt=cMT(s);
+return`<div class="stock-card"><div class="card-top" onclick="tDet(this.parentElement)"><div class="c-sym-grp"><span class="c-sym">${s.symbol}</span>${s.is_fno?'<span class="fno">FnO</span>':''}</div><span class="grade ${gGC(s.grade)}">${s.grade}</span></div>
+<div class="m-tags" onclick="tDet(this.parentElement)">${mt.html}</div>
+<div class="p-grid" onclick="tDet(this.parentElement)"><div class="p-box en"><div class="lb">Entry</div><div class="vl">₹${s.entry.toFixed(2)}</div></div><div class="p-box sl"><div class="lb">Stop Loss</div><div class="vl">₹${s.stop_loss.toFixed(2)}</div></div><div class="p-box tg"><div class="lb">Target</div><div class="vl">₹${s.target.toFixed(2)}</div></div></div>
+<div class="met-row" onclick="tDet(this.parentElement)"><div class="met"><span class="ml">R:R</span><span class="mv rr">${s.risk_reward.toFixed(1)}</span></div><div class="met"><span class="ml">Conf</span><span class="mv ${cf.c}">${cf.l}</span></div><div class="met"><span class="ml">Win</span><span class="mv wr">${bt.win_rate||0}% (${ws}W/${ls}L)</span></div><div class="met"><span class="ml">Score</span><span class="mv sc">${s.grade_score||0}</span></div></div>
+<div class="t-btns"><button class="t-btn tk" onclick="event.stopPropagation();hTk('${s.symbol}',${s.is_fno},'${dir}',${s.entry},${s.stop_loss},${s.target},this)">✅ Taken</button><button class="t-btn nt" onclick="event.stopPropagation();hNt(this)">❌ Not Taken</button></div>
+<div class="c-det">${cEB(co)}
+<div class="d-sec"><div class="d-sec-t">Components</div><div class="d-grid"><div class="d-item"><span class="dl">Z-Score</span><span class="dv">${(co.zscore_component||0).toFixed(1)}/25</span></div><div class="d-item"><span class="dl">Wick</span><span class="dv">${(co.wick_component||0).toFixed(1)}/25</span></div><div class="d-item"><span class="dl">Volume</span><span class="dv">${(co.volume_component||0).toFixed(1)}/25</span></div><div class="d-item"><span class="dl">Momentum</span><span class="dv">${(co.momentum_component||0).toFixed(1)}/25</span></div></div></div>
+<div class="d-sec"><div class="d-sec-t">Backtest</div><div class="d-grid"><div class="d-item"><span class="dl">Trades</span><span class="dv">${bt.total_trades||0}</span></div><div class="d-item"><span class="dl">Win Rate</span><span class="dv ${(bt.win_rate||0)>=50?'pos':'neg'}">${bt.win_rate||0}%</span></div><div class="d-item"><span class="dl">Avg Win</span><span class="dv pos">+${(bt.avg_win||0).toFixed(2)}%</span></div><div class="d-item"><span class="dl">Avg Loss</span><span class="dv neg">-${(bt.avg_loss||0).toFixed(2)}%</span></div><div class="d-item"><span class="dl">Expectancy</span><span class="dv ${(bt.expectancy||0)>=0?'pos':'neg'}">${(bt.expectancy||0).toFixed(2)}%</span></div><div class="d-item"><span class="dl">Sharpe</span><span class="dv ${(bt.sharpe||0)>=1?'pos':'neu'}">${(bt.sharpe||0).toFixed(2)}</span></div><div class="d-item"><span class="dl">PF</span><span class="dv ${(bt.profit_factor||0)>=1?'pos':'neg'}">${(bt.profit_factor||0).toFixed(2)}</span></div><div class="d-item"><span class="dl">Max DD</span><span class="dv neg">${(bt.max_drawdown||0).toFixed(2)}%</span></div><div class="d-item"><span class="dl">CI Low</span><span class="dv ${(bt.ci_lower||0)>0?'pos':'neg'}">${(bt.ci_lower||0).toFixed(2)}</span></div><div class="d-item"><span class="dl">CI High</span><span class="dv pos">${(bt.ci_upper||0).toFixed(2)}</span></div><div class="d-item"><span class="dl">Edge</span><span class="dv ${bt.edge_valid?'pos':'neg'}">${bt.edge_valid?'✅ YES':'❌ NO'}</span></div></div></div>
+<div class="d-sec"><div class="d-sec-t">Details</div><div class="d-grid"><div class="d-item"><span class="dl">Direction</span><span class="dv ${type==='long'?'pos':'neg'}">${type==='long'?'🟢 LONG':'🔴 SHORT'}</span></div><div class="d-item"><span class="dl">Probability</span><span class="dv">${(s.probability*100).toFixed(1)}%</span></div><div class="d-item"><span class="dl">Z-Score</span><span class="dv ${s.zscore<0?'neg':'pos'}">${s.zscore.toFixed(2)}</span></div><div class="d-item"><span class="dl">RSI</span><span class="dv ${s.rsi<30?'neg':s.rsi>70?'pos':'neu'}">${s.rsi.toFixed(1)}</span></div><div class="d-item"><span class="dl">Trend</span><span class="dv">${s.trend.toUpperCase()}</span></div><div class="d-item"><span class="dl">Liq Grab</span><span class="dv ${s.liquidity_grab?'pos':'neu'}">${s.liquidity_grab?'✅':'—'}</span></div><div class="d-item"><span class="dl">Vol Spike</span><span class="dv ${s.volume_spike?'pos':'neu'}">${s.volume_spike?'✅ '+s.volume_ratio+'x':'—'}</span></div><div class="d-item"><span class="dl">MTF</span><span class="dv ${s.mtf_confirmed?'pos':'neg'}">${s.mtf_confirmed?'✅':'❌'}</span></div><div class="d-item"><span class="dl">ATR</span><span class="dv">₹${s.atr.toFixed(2)}</span></div><div class="d-item"><span class="dl">FnO</span><span class="dv ${s.is_fno?'pos':'neu'}">${s.is_fno?'✅':'NO'}</span></div><div class="d-item"><span class="dl">Exhaust</span><span class="dv sc">${s.exhaustion_score.toFixed(1)}/100</span></div><div class="d-item"><span class="dl">R:R</span><span class="dv rr">1:${s.risk_reward.toFixed(1)}</span></div></div></div></div></div>`}
+
+function tDet(c){let d=c.querySelector('.c-det');if(d)d.classList.toggle('exp')}
+function hTk(sym,fno,dir,en,sl,tg,btn){addJ(sym,fno,dir,en,sl,tg);btn.classList.add('on');btn.textContent='✅ Logged';btn.disabled=true;document.querySelector('.j-sec').scrollIntoView({behavior:'smooth'})}
+function hNt(btn){btn.classList.add('on');btn.textContent='❌ Skipped';btn.disabled=true;let p=btn.previousElementSibling;if(p){p.disabled=true;p.style.opacity='.3'}}
+
+// TIER SYSTEM
+function getTier(s){
+    let mt=cMT(s);
+    if(s.grade==='A+'&&mt.count===5)return 1;
+    if(s.grade==='A+'&&mt.count===4)return 2;
+    if(s.grade==='A'&&mt.count===5)return 3;
+    if(s.grade==='A'&&mt.count===4)return 4;
+    if(s.grade==='B+'&&mt.count===5)return 5;
+    return 0;
+}
+
+function tierLabel(t){
+    const labels={1:['t1','⭐ TIER 1 — A+ with 5/5 Models'],2:['t2','🔷 TIER 2 — A+ with 4/5 Models'],3:['t3','🔹 TIER 3 — A with 5/5 Models'],4:['t4','🔸 TIER 4 — A with 4/5 Models'],5:['t5','◽ TIER 5 — B+ with 5/5 Models']};
+    return labels[t]||['',''];
+}
+
+function renderTiered(signals,type){
+    let tiered={1:[],2:[],3:[],4:[],5:[]};
+    signals.forEach(s=>{let t=getTier(s);if(t>0)tiered[t].push(s)});
+    let html='';
+    [1,2,3,4,5].forEach(t=>{
+        if(tiered[t].length>0){
+            let[cls,lbl]=tierLabel(t);
+            html+=`<div class="tier-header ${cls}">${lbl}<span class="tier-badge">${tiered[t].length} signal${tiered[t].length>1?'s':''}</span></div>`;
+            tiered[t].forEach(s=>{html+=cSC(s,type)});
+        }
+    });
+    return html;
+}
+
+// SCAN
+async function runScan(){
+let apiUrl=document.getElementById('apiUrl').value.trim(),btn=document.getElementById('scanBtn'),lo=document.getElementById('lo'),sd=document.getElementById('sDot'),st=document.getElementById('sTxt'),bC=document.getElementById('bCol'),sC=document.getElementById('sCol'),bN=document.getElementById('bCnt'),sN=document.getElementById('sCntS'),lS=document.getElementById('lScan'),sK=document.getElementById('sCnt');
+if(!apiUrl){sd.className='s-dot err';st.textContent='❌ Enter Cloudflare API URL';return}
+apiUrl=apiUrl.replace(/\/+$/,'');if(!apiUrl.startsWith('http'))apiUrl='https://'+apiUrl;
+btn.disabled=true;btn.textContent='SCANNING...';btn.classList.add('scanning');lo.classList.add('on');sd.className='s-dot scan';st.textContent='🔄 Scanning peaks, troughs, liquidity grabs...';
+try{
+let res=await fetch(`${apiUrl}/api/scan`,{method:'GET',headers:{'Accept':'application/json'}});
+if(!res.ok)throw new Error(`HTTP ${res.status}`);
+let data=await res.json();if(data.status==='error')throw new Error(data.message||'Failed');
+let long=(data.signals&&data.signals.long)||[],short=((data.signals&&data.signals.short)||[]).filter(s=>s.is_fno),stats=data.scan_stats||{};
+
+let longFiltered=long.filter(s=>getTier(s)>0),shortFiltered=short.filter(s=>getTier(s)>0);
+let longHTML=renderTiered(longFiltered,'long'),shortHTML=renderTiered(shortFiltered,'short');
+
+bC.innerHTML=longHTML||'<div class="empty"><div class="ei">📉</div><h3>No Qualifying Buy Signals</h3><p>No stocks meet Tier 1-5 criteria today</p></div>';
+sC.innerHTML=shortHTML||'<div class="empty"><div class="ei">📈</div><h3>No Qualifying Sell Signals</h3><p>No FnO stocks meet Tier 1-5 criteria</p></div>';
+bN.textContent=`${longFiltered.length} signal${longFiltered.length!==1?'s':''}`;
+sN.textContent=`${shortFiltered.length} signal${shortFiltered.length!==1?'s':''}`;
+sd.className='s-dot ok';st.textContent=`✅ Done — ${longFiltered.length} buy, ${shortFiltered.length} sell (Tier 1-5 only)`;
+lS.textContent=new Date().toLocaleTimeString();sK.textContent=stats.total_scanned||0;
+}catch(e){console.error(e);sd.className='s-dot err';st.textContent=`❌ ${e.message}`;let eh=`<div class="err"><h3>⚠️ Scan Failed</h3><p style="color:#6b7b8d;font-size:10px;margin-bottom:8px">${e.message}</p><div class="ts"><p>Check Colab is running</p><p>Verify Cloudflare URL</p><p>Test ${apiUrl}/api/health</p><p>Re-run Section 13</p></div></div>`;bC.innerHTML=eh;sC.innerHTML=eh}
+finally{btn.disabled=false;btn.textContent='SCAN NOW';btn.classList.remove('scanning');lo.classList.remove('on')}}
+renderJ();renderA();
+</script>
+</body>
+</html>
