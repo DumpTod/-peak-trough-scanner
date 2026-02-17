@@ -249,6 +249,7 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f1eb;color:#2c3e50;m
 <div class="header-right">
 <input type="text" class="api-input" id="apiUrl" placeholder="Paste Render tunnel URL (e.g. https://xxx.tryRender.com)">
 <button class="scan-btn" id="scanBtn" onclick="runScan()">SCAN NOW</button>
+    <a href="history.html" style="padding:9px 20px;border-radius:7px;border:1.5px solid rgba(255,255,255,.3);color:#fff;font-weight:700;font-size:12px;text-decoration:none;letter-spacing:1px;transition:.3s;backdrop-filter:blur(10px)">📋 HISTORY</a>
 </div>
 </div>
 
@@ -419,8 +420,28 @@ lS.textContent=new Date().toLocaleTimeString();sK.textContent=stats.total_scanne
 }catch(e){console.error(e);sd.className='s-dot err';st.textContent=`❌ ${e.message}`;let eh=`<div class="err"><h3>⚠️ Scan Failed</h3><p style="color:#6b7b8d;font-size:10px;margin-bottom:8px">${e.message}</p><div class="ts"><p>Check Colab is running</p><p>Verify Render URL</p><p>Test ${apiUrl}/api/health</p><p>Check Render dashboard</p></div></div>`;bC.innerHTML=eh;sC.innerHTML=eh}
 finally{btn.disabled=false;btn.textContent='SCAN NOW';btn.classList.remove('scanning');lo.classList.remove('on')}}
 renderJ();renderA();
+    function saveSignalHistory(longSignals, shortSignals, scanTime) {
+    let history = JSON.parse(localStorage.getItem('signalHistory') || '[]');
+    const allSignals = [
+        ...longSignals.map(s => ({...s, direction: 'LONG', scan_date: scanTime})),
+        ...shortSignals.map(s => ({...s, direction: 'SHORT', scan_date: scanTime}))
+    ];
+    allSignals.forEach(sig => {
+        const key = sig.scan_date + '_' + sig.symbol;
+        if (!history.find(h => (h.scan_date + '_' + h.symbol) === key)) {
+            sig._id = key;
+            sig.outcome = 'pending';
+            sig.exit_price = '';
+            sig.pnl = '';
+            history.push(sig);
+        }
+    });
+    if (history.length > 5000) history = history.slice(-5000);
+    localStorage.setItem('signalHistory', JSON.stringify(history));
+}
 </script>
 </body>
 
 </html>
+
 
