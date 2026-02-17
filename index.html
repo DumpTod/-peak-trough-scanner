@@ -247,7 +247,7 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f1eb;color:#2c3e50;m
 <div class="header">
 <div><h1>📊 PEAK & TROUGH SCANNER</h1><p>Liquidity Grab Detection · Mean Reversion · Statistical Validation</p></div>
 <div class="header-right">
-<input type="text" class="api-input" id="apiUrl" placeholder="Paste Cloudflare tunnel URL (e.g. https://xxx.trycloudflare.com)">
+<input type="text" class="api-input" id="apiUrl" placeholder="Paste Render tunnel URL (e.g. https://xxx.tryRender.com)">
 <button class="scan-btn" id="scanBtn" onclick="runScan()">SCAN NOW</button>
 </div>
 </div>
@@ -398,7 +398,7 @@ function renderTiered(signals,type){
 // SCAN
 async function runScan(){
 let apiUrl=document.getElementById('apiUrl').value.trim(),btn=document.getElementById('scanBtn'),lo=document.getElementById('lo'),sd=document.getElementById('sDot'),st=document.getElementById('sTxt'),bC=document.getElementById('bCol'),sC=document.getElementById('sCol'),bN=document.getElementById('bCnt'),sN=document.getElementById('sCntS'),lS=document.getElementById('lScan'),sK=document.getElementById('sCnt');
-if(!apiUrl){sd.className='s-dot err';st.textContent='❌ Enter Cloudflare API URL';return}
+if(!apiUrl){sd.className='s-dot err';st.textContent='❌ Enter Render API URL';return}
 apiUrl=apiUrl.replace(/\/+$/,'');if(!apiUrl.startsWith('http'))apiUrl='https://'+apiUrl;
 btn.disabled=true;btn.textContent='SCANNING...';btn.classList.add('scanning');lo.classList.add('on');sd.className='s-dot scan';st.textContent='🔄 Scanning peaks, troughs, liquidity grabs...';
 try{
@@ -416,9 +416,10 @@ bN.textContent=`${longFiltered.length} signal${longFiltered.length!==1?'s':''}`;
 sN.textContent=`${shortFiltered.length} signal${shortFiltered.length!==1?'s':''}`;
 sd.className='s-dot ok';st.textContent=`✅ Done — ${longFiltered.length} buy, ${shortFiltered.length} sell (Tier 1-5 only)`;
 lS.textContent=new Date().toLocaleTimeString();sK.textContent=stats.total_scanned||0;
-}catch(e){console.error(e);sd.className='s-dot err';st.textContent=`❌ ${e.message}`;let eh=`<div class="err"><h3>⚠️ Scan Failed</h3><p style="color:#6b7b8d;font-size:10px;margin-bottom:8px">${e.message}</p><div class="ts"><p>Check Colab is running</p><p>Verify Cloudflare URL</p><p>Test ${apiUrl}/api/health</p><p>Re-run Section 13</p></div></div>`;bC.innerHTML=eh;sC.innerHTML=eh}
+}catch(e){console.error(e);sd.className='s-dot err';st.textContent=`❌ ${e.message}`;let eh=`<div class="err"><h3>⚠️ Scan Failed</h3><p style="color:#6b7b8d;font-size:10px;margin-bottom:8px">${e.message}</p><div class="ts"><p>Check Colab is running</p><p>Verify Render URL</p><p>Test ${apiUrl}/api/health</p><p>Re-run Section 13</p></div></div>`;bC.innerHTML=eh;sC.innerHTML=eh}
 finally{btn.disabled=false;btn.textContent='SCAN NOW';btn.classList.remove('scanning');lo.classList.remove('on')}}
 renderJ();renderA();
 </script>
 </body>
+
 </html>
