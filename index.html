@@ -403,7 +403,10 @@ if(!apiUrl){sd.className='s-dot err';st.textContent='❌ Enter Render API URL';r
 apiUrl=apiUrl.replace(/\/+$/,'');if(!apiUrl.startsWith('http'))apiUrl='https://'+apiUrl;
 btn.disabled=true;btn.textContent='SCANNING...';btn.classList.add('scanning');lo.classList.add('on');sd.className='s-dot scan';st.textContent='🔄 Scanning peaks, troughs, liquidity grabs...';
 try{
-let res=await fetch(`${apiUrl}/api/scan`,{method:'GET',headers:{'Accept':'application/json'}});
+let controller=new AbortController();
+let timer=setTimeout(()=>controller.abort(),1800000);
+let res=await fetch(`${apiUrl}/api/scan`,{method:'GET',headers:{'Accept':'application/json'},signal:controller.signal});
+clearTimeout(timer);
 if(!res.ok)throw new Error(`HTTP ${res.status}`);
 let data=await res.json();if(data.status==='error')throw new Error(data.message||'Failed');
 let long=(data.signals&&data.signals.long)||[],short=((data.signals&&data.signals.short)||[]).filter(s=>s.is_fno),stats=data.scan_stats||{};
@@ -444,6 +447,7 @@ renderJ();renderA();
 </body>
 
 </html>
+
 
 
 
