@@ -416,10 +416,11 @@ bN.textContent=`${longFiltered.length} signal${longFiltered.length!==1?'s':''}`;
 sN.textContent=`${shortFiltered.length} signal${shortFiltered.length!==1?'s':''}`;
 sd.className='s-dot ok';st.textContent=`✅ Done — ${longFiltered.length} buy, ${shortFiltered.length} sell (Tier 1-5 only)`;
 lS.textContent=new Date().toLocaleTimeString();sK.textContent=stats.total_scanned||0;
-}catch(e){console.error(e);sd.className='s-dot err';st.textContent=`❌ ${e.message}`;let eh=`<div class="err"><h3>⚠️ Scan Failed</h3><p style="color:#6b7b8d;font-size:10px;margin-bottom:8px">${e.message}</p><div class="ts"><p>Check Colab is running</p><p>Verify Render URL</p><p>Test ${apiUrl}/api/health</p><p>Re-run Section 13</p></div></div>`;bC.innerHTML=eh;sC.innerHTML=eh}
+}catch(e){console.error(e);sd.className='s-dot err';st.textContent=`❌ ${e.message}`;let eh=`<div class="err"><h3>⚠️ Scan Failed</h3><p style="color:#6b7b8d;font-size:10px;margin-bottom:8px">${e.message}</p><div class="ts"><p>Check Colab is running</p><p>Verify Render URL</p><p>Test ${apiUrl}/api/health</p><p>Check Render dashboard</p></div></div>`;bC.innerHTML=eh;sC.innerHTML=eh}
 finally{btn.disabled=false;btn.textContent='SCAN NOW';btn.classList.remove('scanning');lo.classList.remove('on')}}
 renderJ();renderA();
 </script>
 </body>
 
 </html>
+
