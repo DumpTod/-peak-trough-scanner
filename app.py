@@ -390,6 +390,218 @@ def api_results():
     return jsonify(cached_results)
 
 application = app
+@app.route('/api/track', methods=['POST'])
+def track_signals():
+    """
+    Accepts a list of signals with entry/SL/target prices.
+    Returns current price data for each symbol to check if entry was met,
+    and how far price has moved relative to entry/SL/target.
+    """
+    try:
+        data = request.get_json()
+        if not data or 'signals' not in data:
+            return jsonify({'error': 'Missing signals array'}), 400
 
+        signals = data['signals']
+        results = []
+
+        for sig in signals:
+            symbol = sig.get('symbol', '')
+            yahoo_ticker = sig.get('yahoo_ticker', '')
+            entry = sig.get('entry', 0)
+            sl = sig.get('sl', 0)
+            target = sig.get('target', 0)
+            direction = sig.get('direction', '').upper()
+            signal_date = sig.get('signal_date', '')
+            signal_id = sig.get('_id', '')
+            days_pending = sig.get('days_pending', 0)
+
+            if not yahoo_ticker:
+                yahoo_ticker = symbol + '.NS'
+
+            try:
+                # Fetch last 5 trading days of data
+                df = yf.download(yahoo_ticker, period='5d', interval='1d', auto_adjust=True, progress=False)
+
+                if df is None or len(df) == 0:
+                    results.append({
+                        '_id': signal_id,
+                        'symbol': symbol,
+                        'status': 'error',
+                        'message': 'No data available'
+                    })
+                    continue
+
+                # Flatten MultiIndex if present
+                if isinstance(df.columns, pd.MultiIndex):
+                    df.columns = [col[0] if isinstance(col, tuple) else col for col in df.columns]
+
+                current_close = float(df['Close'].iloc[-1])
+                current_high = float(df['High'].iloc[-1])
+                current_low = float(df['Low'].iloc[-1])
+
+                # Get data since signal date to check entry trigger
+                # We look at all available days (up to 5)
+                highs = df['High'].tolist()
+                lows = df['Low'].tolist()
+                closes = df['Close'].tolist()
+                dates = [d.strftime('%Y-%m-%d') if hasattr(d, 'strftime') else str(d) for d in df.index.tolist()]
+
+                # Determine how many trading days of data we have after signal
+                trading_days_after = len(df)
+
+                # Check if entry was triggered in any of the available days
+                entry_triggered = False
+                trigger_date = ''
+
+                for i in range(len(df)):
+                    day_low = float(lows[i])
+                    day_high = float(highs[i])
+
+                    if direction in ['LONG', 'BUY']:
+                        # For buy: price must have gone down to entry or below
+                        if day_low <= entry:
+                            entry_triggered = True
+                            trigger_date = dates[i]
+                            break
+                    elif direction in ['SHORT', 'SELL']:
+                        # For sell: price must have gone up to entry or above
+                        if day_high >= entry:
+                            entry_triggered = True
+                            trigger_date = dates[i]
+                            break
+
+                # Check SL and Target hit
+                sl_hit = False
+                target_hit = False
+                sl_hit_date = ''
+                target_hit_date = ''
+
+                if entry_triggered:
+                    # Check from trigger point onwards
+                    trigger_idx = dates.index(trigger_date)
+                    for i in range(trigger_idx, len(df)):
+                        day_low = float(lows[i])
+                        day_high = float(highs[i])
+
+                        if direction in ['LONG', 'BUY']:
+                            if day_low <= sl and not sl_hit:
+                                sl_hit = True
+                                sl_hit_date = dates[i]
+                            if day_high >= target and not target_hit:
+                                target_hit = True
+                                target_hit_date = dates[i]
+                        elif direction in ['SHORT', 'SELL']:
+                            if day_high >= sl and not sl_hit:
+                                sl_hit = True
+                                sl_hit_date = dates[i]
+                            if day_low <= target and not target_hit:
+                                target_hit = True
+                                target_hit_date = dates[i]
+
+                # Calculate P&L
+                pnl_price = 0
+                pnl_pct = 0
+
+                if entry_triggered and entry > 0:
+                    if direction in ['LONG', 'BUY']:
+                        pnl_price = round(current_close - entry, 2)
+                        pnl_pct = round((current_close - entry) / entry * 100, 2)
+                    elif direction in ['SHORT', 'SELL']:
+                        pnl_price = round(entry - current_close, 2)
+                        pnl_pct = round((entry - current_close) / entry * 100, 2)
+
+                # Determine final status
+                status = 'pending'
+                outcome = 'pending'
+                exit_price = ''
+
+                if entry_triggered:
+                    if target_hit and sl_hit:
+                        # Both hit — check which came first
+                        if dates.index(target_hit_date) <= dates.index(sl_hit_date):
+                            status = 'target_hit'
+                            outcome = 'target_hit'
+                            exit_price = target
+                        else:
+                            status = 'stop_hit'
+                            outcome = 'stop_hit'
+                            exit_price = sl
+                    elif target_hit:
+                        status = 'target_hit'
+                        outcome = 'target_hit'
+                        exit_price = target
+                    elif sl_hit:
+                        status = 'stop_hit'
+                        outcome = 'stop_hit'
+                        exit_price = sl
+                    else:
+                        status = 'open'
+                        outcome = 'pending'
+                        exit_price = current_close
+                else:
+                    # Entry not triggered
+                    new_days_pending = days_pending + 1
+                    if new_days_pending >= 2:
+                        status = 'expired'
+                        outcome = 'expired'
+                    else:
+                        status = 'pending'
+                        outcome = 'pending'
+
+                # Calculate distances
+                sl_distance = 0
+                target_distance = 0
+                if entry_triggered and entry > 0:
+                    if direction in ['LONG', 'BUY']:
+                        sl_distance = round(current_close - sl, 2)
+                        target_distance = round(target - current_close, 2)
+                    else:
+                        sl_distance = round(sl - current_close, 2)
+                        target_distance = round(current_close - target, 2)
+
+                result = {
+                    '_id': signal_id,
+                    'symbol': symbol,
+                    'status': status,
+                    'outcome': outcome,
+                    'entry_triggered': entry_triggered,
+                    'trigger_date': trigger_date,
+                    'current_close': current_close,
+                    'current_high': current_high,
+                    'current_low': current_low,
+                    'pnl_price': pnl_price,
+                    'pnl_pct': pnl_pct,
+                    'sl_hit': sl_hit,
+                    'target_hit': target_hit,
+                    'sl_hit_date': sl_hit_date,
+                    'target_hit_date': target_hit_date,
+                    'sl_distance': sl_distance,
+                    'target_distance': target_distance,
+                    'exit_price': float(exit_price) if exit_price != '' else '',
+                    'days_pending': days_pending + 1 if not entry_triggered else days_pending,
+                    'trading_days_checked': trading_days_after,
+                    'last_checked': pd.Timestamp.now().strftime('%Y-%m-%d %H:%M')
+                }
+
+                results.append(sanitize(result))
+
+            except Exception as e:
+                results.append({
+                    '_id': signal_id,
+                    'symbol': symbol,
+                    'status': 'error',
+                    'message': str(e)
+                })
+
+        return jsonify({
+            'status': 'success',
+            'tracked': len(results),
+            'results': results,
+            'timestamp': pd.Timestamp.now().isoformat()
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
