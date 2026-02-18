@@ -405,6 +405,7 @@ btn.disabled=true;btn.textContent='SCANNING...';btn.classList.add('scanning');lo
 try{
 let controller=new AbortController();
 let timer=setTimeout(()=>controller.abort(),1800000);
+localStorage.setItem('ptScannerApiUrl', apiUrl);
 let res=await fetch(`${apiUrl}/api/scan`,{method:'GET',headers:{'Accept':'application/json'},signal:controller.signal});
 clearTimeout(timer);
 if(!res.ok)throw new Error(`HTTP ${res.status}`);
@@ -447,6 +448,7 @@ renderJ();renderA();
 </body>
 
 </html>
+
 
 
 
