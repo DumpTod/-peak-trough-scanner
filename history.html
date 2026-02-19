@@ -255,20 +255,35 @@ async function rescanTrades(){
     const rsText=document.getElementById('rsText');
     const rsFill=document.getElementById('rsFill');
 
-    // Get pending/open signals only
+    // Ask for Render URL
+    let renderUrl=localStorage.getItem('renderUrl')||'';
+    if(!renderUrl){
+        renderUrl=prompt('Enter your Render API URL:\n(e.g. https://peak-trough-scanner.onrender.com)');
+        if(!renderUrl){alert('Render URL required for rescan.');return}
+        renderUrl=renderUrl.replace(/\/+$/,'');
+        localStorage.setItem('renderUrl',renderUrl);
+    }
+
+    // Wake up Render first
+    try{
+        rsText.textContent='Waking up Render...';
+        bar.classList.add('active');
+        await fetch(renderUrl+'/api/health');
+    }catch(e){}
+
     const toCheck=allSignals.filter(s=>!s.outcome||s.outcome==='pending'||s.outcome==='open'||s.outcome==='not_triggered');
 
     if(toCheck.length===0){
         alert('No pending/open trades to rescan.');
+        bar.classList.remove('active');
         return;
     }
 
     btn.disabled=true;
     btn.textContent='🔄 Scanning...';
     btn.classList.add('scanning');
-    bar.classList.add('active');
     log.classList.add('active');
-    log.innerHTML='<p>Starting rescan of '+toCheck.length+' signals...</p>';
+    log.innerHTML='<p>Starting rescan of '+toCheck.length+' signals via Render API...</p>';
 
     let processed=0;
     let results={triggered:0,target:0,stop:0,open:0,notTriggered:0,expired:0,errors:0};
@@ -276,7 +291,6 @@ async function rescanTrades(){
     for(let i=0;i<toCheck.length;i++){
         const sig=toCheck[i];
         const sym=sig.symbol;
-        const yahooSym=sym.replace('&','%26')+'.NS';
 
         processed++;
         const pct=Math.round((processed/toCheck.length)*100);
@@ -284,7 +298,6 @@ async function rescanTrades(){
         rsText.textContent=`Checking ${sym} (${processed}/${toCheck.length})`;
 
         try{
-            // Parse signal date
             const scanDate=parseSignalDate(sig.scan_date);
             if(!scanDate){
                 log.innerHTML+=`<p class="miss">❌ ${sym}: Could not parse date</p>`;
@@ -292,26 +305,21 @@ async function rescanTrades(){
                 continue;
             }
 
-            // Fetch price data from signal date to now
             const startDate=formatDateForYahoo(scanDate);
-            const endDate=formatDateForYahoo(new Date(Date.now()+86400000)); // tomorrow
-
-            const url=`https://query1.finance.yahoo.com/v8/finance/chart/${yahooSym}?period1=${Math.floor(scanDate.getTime()/1000)}&period2=${Math.floor(Date.now()/1000)}&interval=1d`;
+            const url=`${renderUrl}/api/check_price?symbol=${encodeURIComponent(sym)}&start=${startDate}`;
 
             const response=await fetch(url);
             const data=await response.json();
 
-            if(!data.chart||!data.chart.result||!data.chart.result[0]){
-                log.innerHTML+=`<p class="miss">⚠️ ${sym}: No data from Yahoo</p>`;
+            if(data.error){
+                log.innerHTML+=`<p class="miss">⚠️ ${sym}: ${data.error}</p>`;
                 results.errors++;
                 continue;
             }
 
-            const result=data.chart.result[0];
-            const highs=result.indicators.quote[0].high;
-            const lows=result.indicators.quote[0].low;
-            const closes=result.indicators.quote[0].close;
-            const timestamps=result.timestamp;
+            const highs=data.highs;
+            const lows=data.lows;
+            const closes=data.closes;
 
             if(!highs||!lows||highs.length===0){
                 log.innerHTML+=`<p class="miss">⚠️ ${sym}: Empty price data</p>`;
@@ -324,8 +332,6 @@ async function rescanTrades(){
             const sl=parseFloat(sig.stop_loss);
             const dir=(sig.direction||sig.signal_type||'').toUpperCase();
             const isLong=dir==='LONG'||dir==='BUY';
-
-            // Calculate days since signal
             const daysSince=Math.floor((Date.now()-scanDate.getTime())/(1000*60*60*24));
 
             // Find if entry was triggered
@@ -335,20 +341,9 @@ async function rescanTrades(){
             for(let j=0;j<highs.length;j++){
                 if(highs[j]===null||lows[j]===null)continue;
                 if(isLong){
-                    // For LONG: price must have come DOWN to entry level (Low ≤ Entry)
-                    // OR opened/traded at entry level
-                    if(lows[j]<=entry||closes[j]<=entry){
-                        entryTriggered=true;
-                        entryDayIdx=j;
-                        break;
-                    }
+                    if(lows[j]<=entry){entryTriggered=true;entryDayIdx=j;break}
                 }else{
-                    // For SHORT: price must have come UP to entry level (High ≥ Entry)
-                    if(highs[j]>=entry||closes[j]>=entry){
-                        entryTriggered=true;
-                        entryDayIdx=j;
-                        break;
-                    }
+                    if(highs[j]>=entry){entryTriggered=true;entryDayIdx=j;break}
                 }
             }
 
@@ -367,73 +362,42 @@ async function rescanTrades(){
                 continue;
             }
 
-            // Entry was triggered — check post-entry prices for target/stop
+            // Entry triggered — check post-entry for target/stop
             let targetHit=false;
             let stopHit=false;
-            let targetDay=-1;
-            let stopDay=-1;
             let exitPrice=null;
 
             for(let j=entryDayIdx;j<highs.length;j++){
                 if(highs[j]===null||lows[j]===null)continue;
-
                 if(isLong){
-                    // Check stop first (same day stop takes priority)
-                    if(lows[j]<=sl&&!stopHit&&!targetHit){
-                        stopHit=true;
-                        stopDay=j;
-                        exitPrice=sl;
-                    }
-                    // Check target
-                    if(highs[j]>=target&&!targetHit&&!stopHit){
-                        targetHit=true;
-                        targetDay=j;
-                        exitPrice=target;
-                    }
+                    if(lows[j]<=sl&&!stopHit&&!targetHit){stopHit=true;exitPrice=sl}
+                    if(highs[j]>=target&&!targetHit&&!stopHit){targetHit=true;exitPrice=target}
                 }else{
-                    // SHORT
-                    if(highs[j]>=sl&&!stopHit&&!targetHit){
-                        stopHit=true;
-                        stopDay=j;
-                        exitPrice=sl;
-                    }
-                    if(lows[j]<=target&&!targetHit&&!stopHit){
-                        targetHit=true;
-                        targetDay=j;
-                        exitPrice=target;
-                    }
+                    if(highs[j]>=sl&&!stopHit&&!targetHit){stopHit=true;exitPrice=sl}
+                    if(lows[j]<=target&&!targetHit&&!stopHit){targetHit=true;exitPrice=target}
                 }
-
-                // If either hit, stop checking
                 if(targetHit||stopHit)break;
             }
 
             if(targetHit){
                 sig.outcome='target_hit';
                 sig.exit_price=String(exitPrice);
-                sig.pnl=isLong?
-                    (((target-entry)/entry)*100).toFixed(2):
-                    (((entry-target)/entry)*100).toFixed(2);
+                sig.pnl=isLong?(((target-entry)/entry)*100).toFixed(2):(((entry-target)/entry)*100).toFixed(2);
                 sig.rescan_note=`Target ₹${target} hit`;
                 log.innerHTML+=`<p class="hit">✅ ${sym}: TARGET HIT at ₹${target} | P&L: +${sig.pnl}%</p>`;
                 results.target++;
             }else if(stopHit){
                 sig.outcome='stop_hit';
                 sig.exit_price=String(exitPrice);
-                sig.pnl=isLong?
-                    (((sl-entry)/entry)*100).toFixed(2):
-                    (((entry-sl)/entry)*100).toFixed(2);
+                sig.pnl=isLong?(((sl-entry)/entry)*100).toFixed(2):(((entry-sl)/entry)*100).toFixed(2);
                 sig.rescan_note=`Stop ₹${sl} hit`;
                 log.innerHTML+=`<p class="miss">❌ ${sym}: STOP HIT at ₹${sl} | P&L: ${sig.pnl}%</p>`;
                 results.stop++;
             }else{
-                // Trade is open — neither target nor stop hit yet
                 const lastClose=closes[closes.length-1]||entry;
                 sig.outcome='open';
                 sig.exit_price=String(lastClose.toFixed(2));
-                sig.pnl=isLong?
-                    (((lastClose-entry)/entry)*100).toFixed(2):
-                    (((entry-lastClose)/entry)*100).toFixed(2);
+                sig.pnl=isLong?(((lastClose-entry)/entry)*100).toFixed(2):(((entry-lastClose)/entry)*100).toFixed(2);
                 sig.rescan_note=`Open — current ₹${lastClose.toFixed(2)}`;
                 log.innerHTML+=`<p class="open">🔵 ${sym}: OPEN — current ₹${lastClose.toFixed(2)} | P&L: ${sig.pnl}%</p>`;
                 results.open++;
@@ -444,11 +408,9 @@ async function rescanTrades(){
             results.errors++;
         }
 
-        // Small delay to avoid rate limiting
-        await new Promise(r=>setTimeout(r,300));
+        await new Promise(r=>setTimeout(r,500));
     }
 
-    // Summary
     log.innerHTML+=`<p style="margin-top:8px;font-weight:700;color:var(--dark)">━━ RESCAN COMPLETE ━━</p>`;
     log.innerHTML+=`<p>✅ Targets Hit: ${results.target} | ❌ Stops Hit: ${results.stop} | 🔵 Open: ${results.open}</p>`;
     log.innerHTML+=`<p>⏳ Not Triggered: ${results.notTriggered} | ⏰ Expired: ${results.expired} | ⚠️ Errors: ${results.errors}</p>`;
@@ -461,11 +423,8 @@ async function rescanTrades(){
     btn.classList.remove('scanning');
     rsFill.style.width='100%';
     rsText.textContent=`Done — ${processed} signals checked`;
-
-    // Auto-scroll log to bottom
     log.scrollTop=log.scrollHeight;
 }
-
 // ============================================
 // DATE HELPERS
 // ============================================
