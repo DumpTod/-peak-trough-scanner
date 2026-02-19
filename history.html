@@ -3,695 +3,771 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Signal History & Track Record</title>
+<title>Signal History 📋</title>
 <style>
-:root{--bg:#f4f1eb;--primary:#5b8fa8;--dark:#34495e;--green:#27ae60;--red:#e74c3c;--gold:#f39c12;--purple:#8e44ad;--blue:#2980b9;--orange:#d35400}
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);font-family:'Segoe UI',Tahoma,sans-serif;color:#333;min-height:100vh}
-.header{background:linear-gradient(135deg,var(--dark),#4a6d8c,var(--primary),#6fa3bd);padding:20px 30px;color:#fff;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
-.header h1{font-size:1.4rem;text-shadow:0 2px 4px rgba(0,0,0,0.2)}
-.header p{font-size:0.8rem;opacity:0.85;margin-top:2px}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f1eb;color:#2c3e50;min-height:100vh}
+:root{--steel:#5b8fa8;--dark:#34495e;--green:#27ae60;--red:#e74c3c;--gold:#f39c12;--purple:#8e44ad;--blue:#2980b9;--orange:#d35400;--gray:#8a9bae;--light:#fff;--border:rgba(91,143,168,.12)}
+
+.header{background:linear-gradient(135deg,#34495e,#4a6d8c 40%,#5b8fa8 70%,#6fa3bd);padding:20px 28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;box-shadow:0 4px 18px rgba(0,0,0,.12)}
+.header h1{font-size:22px;font-weight:800;color:#fff;letter-spacing:.8px}
+.header p{color:#d5e8f2;font-size:11px;margin-top:2px}
 .h-btns{display:flex;gap:8px;flex-wrap:wrap}
-.h-btns a,.h-btns button{padding:10px 20px;border-radius:8px;font-size:0.85rem;font-weight:600;cursor:pointer;text-decoration:none;border:none;color:#fff;display:inline-flex;align-items:center;gap:6px;transition:transform 0.2s}
-.h-btns a:hover,.h-btns button:hover{transform:translateY(-1px)}
-.btn-back{background:rgba(255,255,255,0.2);backdrop-filter:blur(6px)}
-.btn-export{background:var(--green)}
-.btn-clear{background:var(--red)}
-.btn-rescan{background:linear-gradient(135deg,#8e44ad,#9b59b6)}
-.filter-bar{background:rgba(255,255,255,0.7);backdrop-filter:blur(10px);padding:14px 30px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-bottom:1px solid rgba(0,0,0,0.08)}
-.filter-bar select,.filter-bar input{padding:7px 12px;border-radius:6px;border:1px solid #d0d0d0;font-size:0.8rem;background:#fff}
-.filter-bar button{padding:7px 14px;border-radius:6px;border:none;background:var(--primary);color:#fff;cursor:pointer;font-size:0.8rem}
-.container{max-width:1500px;margin:0 auto;padding:20px 30px}
-.stats-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:12px;margin-bottom:20px}
-.stat-card{background:rgba(255,255,255,0.8);backdrop-filter:blur(10px);border-radius:10px;padding:14px;text-align:center;border-top:3px solid var(--primary)}
-.stat-card h4{font-size:0.7rem;color:#888;text-transform:uppercase;margin-bottom:4px}
-.stat-card .val{font-size:1.3rem;font-weight:700}
-.sc-green{border-top-color:var(--green)}.sc-red{border-top-color:var(--red)}.sc-blue{border-top-color:var(--blue)}.sc-gold{border-top-color:var(--gold)}.sc-purple{border-top-color:var(--purple)}.sc-orange{border-top-color:var(--orange)}
-.grade-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
-.grade-card{background:rgba(255,255,255,0.8);backdrop-filter:blur(10px);border-radius:10px;padding:16px;border-top:3px solid var(--primary)}
-.grade-card h3{font-size:1rem;margin-bottom:10px;color:var(--dark)}
-.grade-card .gd-row{display:flex;justify-content:space-between;padding:4px 0;font-size:0.8rem;border-bottom:1px solid rgba(0,0,0,0.05)}
-.grade-card .gd-row:last-child{border-bottom:none}
-.signal-log{background:rgba(255,255,255,0.8);backdrop-filter:blur(10px);border-radius:12px;padding:20px;margin-bottom:20px}
-.signal-log h3{font-size:1rem;margin-bottom:12px;color:var(--dark)}
-.signal-log h3 span{background:var(--primary);color:#fff;padding:2px 10px;border-radius:10px;font-size:0.75rem;margin-left:8px}
-table{width:100%;border-collapse:collapse;font-size:0.75rem}
-thead{background:var(--dark);color:#fff}
-th{padding:8px 6px;cursor:pointer;white-space:nowrap;font-size:0.7rem;text-align:left}
-th:hover{background:#4a6d8c}
-td{padding:7px 6px;border-bottom:1px solid rgba(0,0,0,0.06);vertical-align:top}
-tr:hover{background:rgba(91,143,168,0.06)}
-.pagination{display:flex;justify-content:center;gap:4px;margin-top:14px}
-.pagination button{padding:6px 12px;border:1px solid #d0d0d0;border-radius:6px;background:#fff;cursor:pointer;font-size:0.8rem}
-.pagination button:disabled{opacity:0.4;cursor:default}
-.footer{text-align:center;padding:20px;color:#999;font-size:0.75rem}
-.track-col{min-width:85px;text-align:center}
-.track-status{display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.65rem;font-weight:600}
-.ts-open{background:rgba(41,128,185,0.15);color:#2980b9}
-.ts-pending{background:rgba(243,156,18,0.15);color:#f39c12}
-.ts-target{background:rgba(39,174,96,0.15);color:#27ae60}
-.ts-stop{background:rgba(231,76,60,0.15);color:#e74c3c}
-.ts-expired{background:rgba(127,140,141,0.15);color:#7f8c8d}
-.ts-error{background:rgba(231,76,60,0.1);color:#e74c3c}
-.pnl-live{font-weight:600;font-size:0.72rem}
-.pnl-live.favor{color:#27ae60}
-.pnl-live.against{color:#e74c3c}
-.pnl-live.neutral{color:#7f8c8d}
-.track-details{font-size:0.65rem;color:#999;margin-top:2px}
-.rescan-status{position:fixed;top:20px;right:20px;background:rgba(255,255,255,0.96);backdrop-filter:blur(14px);border-radius:12px;padding:18px 24px;box-shadow:0 8px 32px rgba(0,0,0,0.18);z-index:10000;min-width:300px;border-left:4px solid #8e44ad;display:none}
-.rescan-status.active{display:block}
-.rescan-status h4{margin:0 0 8px;color:#8e44ad;font-size:0.95rem}
-.rs-prog{background:#eee;border-radius:6px;height:8px;margin:8px 0;overflow:hidden}
-.rs-bar{height:100%;background:linear-gradient(90deg,#8e44ad,#9b59b6);border-radius:6px;transition:width 0.3s}
-.rs-text{font-size:0.8rem;color:#666}
-.rs-result{margin-top:10px;font-size:0.8rem;line-height:1.6}
-.rs-result .triggered{color:#27ae60}
-.rs-result .expired{color:#e74c3c}
-.rs-result .still-pending{color:#f39c12}
-.rs-result .open-trade{color:#2980b9}
-.mdot{display:inline-block;width:8px;height:8px;border-radius:50%;margin:0 1px}
-@media(max-width:1000px){.stats-grid{grid-template-columns:repeat(4,1fr)}.grade-grid{grid-template-columns:1fr}}
-@media(max-width:600px){.stats-grid{grid-template-columns:repeat(2,1fr)}.header{flex-direction:column;text-align:center}.filter-bar{flex-direction:column}}
+.h-btn{padding:8px 18px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid rgba(255,255,255,.3);color:#fff;background:rgba(255,255,255,.08);text-decoration:none;transition:.3s;letter-spacing:.5px;backdrop-filter:blur(8px)}
+.h-btn:hover{background:rgba(255,255,255,.18)}
+.h-btn.danger{border-color:rgba(231,76,60,.4);color:#ff8a80}
+.h-btn.danger:hover{background:rgba(231,76,60,.2)}
+.h-btn.export{border-color:rgba(46,204,113,.4);color:#a5d6a7}
+.h-btn.export:hover{background:rgba(46,204,113,.15)}
+.h-btn.rescan{border-color:rgba(52,152,219,.5);color:#90caf9;background:rgba(52,152,219,.12)}
+.h-btn.rescan:hover{background:rgba(52,152,219,.25)}
+.h-btn.rescan.scanning{animation:rsPulse 1.5s ease-in-out infinite}
+@keyframes rsPulse{0%,100%{box-shadow:0 0 5px rgba(52,152,219,.2)}50%{box-shadow:0 0 20px rgba(52,152,219,.5)}}
+
+.container{max-width:1600px;margin:0 auto;padding:16px 28px}
+
+/* RESCAN STATUS */
+.rescan-bar{padding:10px 18px;background:var(--light);border-radius:8px;border:1px solid var(--border);margin-bottom:12px;display:none;align-items:center;gap:10px}
+.rescan-bar.active{display:flex}
+.rs-spinner{width:16px;height:16px;border:2px solid var(--border);border-top:2px solid var(--steel);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.rs-text{font-size:11px;color:var(--gray)}
+.rs-progress{flex:1;height:6px;background:rgba(0,0,0,.04);border-radius:3px;overflow:hidden}
+.rs-fill{height:100%;background:linear-gradient(90deg,var(--steel),var(--blue));border-radius:3px;transition:width .3s}
+
+/* FILTER BAR */
+.filter-bar{display:flex;gap:8px;flex-wrap:wrap;padding:14px 18px;background:var(--light);border-radius:10px;border:1px solid #e0e0e0;margin-bottom:16px;box-shadow:0 1px 6px rgba(0,0,0,.02);align-items:center}
+.f-label{font-size:9px;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+.f-select,.f-input{padding:6px 10px;border-radius:5px;border:1px solid rgba(91,143,168,.18);font-size:11px;color:var(--dark);background:var(--light);outline:none;transition:.2s}
+.f-select:focus,.f-input:focus{border-color:var(--steel);box-shadow:0 0 5px rgba(91,143,168,.12)}
+.f-input{width:120px}
+.f-reset{padding:6px 12px;border-radius:5px;border:1px solid rgba(231,76,60,.2);color:var(--red);background:none;cursor:pointer;font-size:10px;font-weight:700;transition:.2s}
+.f-reset:hover{background:rgba(231,76,60,.06)}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:10px;margin-bottom:16px}
+.stat-card{background:rgba(255,255,255,.7);backdrop-filter:blur(10px);border-radius:9px;border:1px solid var(--border);padding:14px 10px;text-align:center;transition:.3s;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2.5px;border-radius:2px 2px 0 0}
+.stat-card:nth-child(1)::before{background:var(--steel)}
+.stat-card:nth-child(2)::before{background:var(--green)}
+.stat-card:nth-child(3)::before{background:var(--red)}
+.stat-card:nth-child(4)::before{background:var(--blue)}
+.stat-card:nth-child(5)::before{background:var(--gold)}
+.stat-card:nth-child(6)::before{background:var(--purple)}
+.stat-card:nth-child(7)::before{background:var(--orange)}
+.stat-card:nth-child(8)::before{background:var(--green)}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(91,143,168,.08)}
+.st-l{font-size:8px;color:var(--gray);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px}
+.st-v{font-size:20px;font-weight:800;color:var(--dark)}
+.st-v.pos{color:var(--green)}.st-v.neg{color:var(--red)}
+.st-s{font-size:8px;color:var(--gray);margin-top:2px}
+
+/* GRADE COMPARISON */
+.grade-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.grade-card{background:rgba(255,255,255,.65);backdrop-filter:blur(12px);border-radius:10px;border:1px solid var(--border);padding:16px;box-shadow:0 2px 10px rgba(91,143,168,.04);transition:.3s}
+.grade-card:hover{box-shadow:0 4px 18px rgba(91,143,168,.08)}
+.gc-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.gc-grade{font-size:18px;font-weight:800;letter-spacing:.5px}
+.gc-grade.ap{color:var(--green)}.gc-grade.a{color:var(--blue)}.gc-grade.bp{color:var(--orange)}
+.gc-count{font-size:10px;color:var(--gray);padding:2px 8px;background:rgba(91,143,168,.05);border-radius:10px}
+.gc-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.gc-item{display:flex;justify-content:space-between;padding:4px 6px;background:rgba(91,143,168,.02);border-radius:4px;font-size:9px}
+.gc-item .gl{color:var(--gray)}.gc-item .gv{font-weight:700;color:var(--dark)}
+.gv.pos{color:var(--green)}.gv.neg{color:var(--red)}
+
+/* TABLE */
+.tbl-wrap{background:var(--light);border-radius:10px;border:1px solid #e0e0e0;overflow:hidden;box-shadow:0 1px 8px rgba(0,0,0,.03);margin-bottom:16px}
+.tbl-hdr{padding:12px 16px;background:linear-gradient(135deg,rgba(91,143,168,.05),transparent);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.tbl-title{font-size:13px;font-weight:800;color:var(--dark)}
+.tbl-count{font-size:10px;color:var(--gray);padding:2px 8px;background:rgba(91,143,168,.05);border-radius:10px}
+.tbl-scroll{overflow-x:auto}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:10px}
+thead th{background:rgba(91,143,168,.04);color:var(--steel);font-weight:700;text-transform:uppercase;letter-spacing:.4px;font-size:8px;padding:8px 8px;text-align:left;border-bottom:1px solid var(--border);position:sticky;top:0;cursor:pointer;white-space:nowrap;user-select:none}
+thead th:hover{background:rgba(91,143,168,.08)}
+thead th.sorted-asc::after{content:' ▲';font-size:7px}
+thead th.sorted-desc::after{content:' ▼';font-size:7px}
+tbody tr{transition:.15s}
+tbody tr:hover{background:rgba(91,143,168,.03)}
+tbody td{padding:7px 8px;border-bottom:1px solid rgba(0,0,0,.025);color:var(--dark);vertical-align:middle;white-space:nowrap}
+.t-sym{font-weight:700;color:var(--dark)}
+.t-fno{font-size:7px;padding:1px 4px;border-radius:2px;background:rgba(243,156,18,.08);color:#e67e22;border:1px solid rgba(243,156,18,.12);margin-left:2px}
+.t-dir{font-weight:700;font-size:9px}
+.t-dir.long{color:var(--green)}.t-dir.short{color:var(--red)}
+.t-grade{padding:2px 6px;border-radius:3px;font-weight:800;font-size:9px;letter-spacing:.3px}
+.t-grade.ap{background:rgba(39,174,96,.08);color:var(--green);border:1px solid rgba(39,174,96,.15)}
+.t-grade.a{background:rgba(52,152,219,.08);color:var(--blue);border:1px solid rgba(52,152,219,.15)}
+.t-grade.bp{background:rgba(243,156,18,.06);color:var(--orange);border:1px solid rgba(243,156,18,.12)}
+.t-en{color:var(--steel);font-weight:600}
+.t-sl{color:var(--red);font-weight:600}
+.t-tg{color:var(--green);font-weight:600}
+.m-dots{display:flex;gap:3px}
+.m-dot{width:8px;height:8px;border-radius:50%;border:1px solid}
+.m-dot.on.z{background:rgba(52,152,219,.3);border-color:var(--blue)}
+.m-dot.on.w{background:rgba(142,68,173,.3);border-color:var(--purple)}
+.m-dot.on.v{background:rgba(211,84,0,.3);border-color:var(--orange)}
+.m-dot.on.m{background:rgba(39,174,96,.3);border-color:var(--green)}
+.m-dot.on.t{background:rgba(243,156,18,.3);border-color:var(--gold)}
+.m-dot.off{background:rgba(0,0,0,.03);border-color:rgba(0,0,0,.08)}
+.t-outcome{padding:4px 6px;border-radius:4px;border:1px solid var(--border);font-size:9px;background:var(--light);color:var(--dark);outline:none;cursor:pointer}
+.t-exit{padding:3px 5px;border:1px solid var(--border);border-radius:3px;font-size:9px;width:65px;outline:none;background:var(--light);color:var(--dark)}
+.t-exit:focus,.t-outcome:focus{border-color:var(--steel)}
+.t-pnl{font-weight:700;font-size:9px}
+.t-pnl.pos{color:var(--green)}.t-pnl.neg{color:var(--red)}.t-pnl.neu{color:var(--gray)}
+
+/* STATUS BADGES */
+.t-status{padding:2px 7px;border-radius:3px;font-size:8px;font-weight:700;letter-spacing:.2px}
+.t-status.open{background:rgba(52,152,219,.1);color:var(--blue);border:1px solid rgba(52,152,219,.2)}
+.t-status.target-hit{background:rgba(39,174,96,.1);color:var(--green);border:1px solid rgba(39,174,96,.2)}
+.t-status.stop-hit{background:rgba(231,76,60,.1);color:var(--red);border:1px solid rgba(231,76,60,.2)}
+.t-status.not-triggered{background:rgba(149,165,166,.08);color:#7f8c8d;border:1px solid rgba(149,165,166,.15)}
+.t-status.expired{background:rgba(243,156,18,.08);color:var(--gold);border:1px solid rgba(243,156,18,.15)}
+.t-status.pending{background:rgba(91,143,168,.06);color:var(--gray);border:1px solid var(--border)}
+
+.pagination{display:flex;justify-content:center;gap:4px;padding:12px}
+.pg-btn{padding:5px 10px;border-radius:4px;border:1px solid var(--border);background:var(--light);color:var(--dark);font-size:10px;cursor:pointer;transition:.2s;font-weight:600}
+.pg-btn:hover{background:rgba(91,143,168,.06)}
+.pg-btn.active{background:var(--steel);color:#fff;border-color:var(--steel)}
+.pg-btn:disabled{opacity:.4;cursor:not-allowed}
+.empty{text-align:center;padding:50px;color:var(--gray);font-size:12px}
+.footer{text-align:center;padding:14px 28px;background:var(--light);border-top:1px solid #e8e8e8;margin-top:16px}
+.footer p{font-size:9px;color:#95a5a6;line-height:1.5}
+.footer .ver{color:var(--steel);font-weight:700}
+
+/* RESCAN LOG */
+.rescan-log{margin-bottom:16px;padding:12px 16px;background:var(--light);border-radius:8px;border:1px solid var(--border);display:none;max-height:150px;overflow-y:auto}
+.rescan-log.active{display:block}
+.rescan-log p{font-size:9px;color:var(--gray);padding:2px 0}
+.rescan-log p.hit{color:var(--green)}
+.rescan-log p.miss{color:var(--red)}
+.rescan-log p.open{color:var(--blue)}
+
+@media(max-width:1000px){.stats-grid{grid-template-columns:repeat(4,1fr)}.grade-grid{grid-template-columns:1fr}.filter-bar{flex-direction:column}.container{padding:10px 14px}.header{padding:16px}}
+@media(max-width:600px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
 
-<div class="rescan-status" id="rescanStatus">
-  <h4>🔄 Rescanning Trades...</h4>
-  <div class="rs-prog"><div class="rs-bar" id="rsBar" style="width:0%"></div></div>
-  <div class="rs-text" id="rsText">Preparing...</div>
-  <div class="rs-result" id="rsResult"></div>
-</div>
-
 <div class="header">
-  <div>
-    <h1>📋 Signal History & Track Record</h1>
-    <p>Auto-logged signals from every scan</p>
-  </div>
-  <div class="h-btns">
-    <a href="index.html" class="btn-back">← Back to Scanner</a>
-    <button class="btn-rescan" id="rescanBtn" onclick="rescanTrades()">🔄 Rescan Trades</button>
-    <button class="btn-export" onclick="exportCSV()">📥 Export CSV</button>
-    <button class="btn-clear" onclick="clearAll()">🗑️ Clear All</button>
-  </div>
+<div>
+<h1>📋 Signal History & Track Record</h1>
+<p>Auto-logged signals · Rescan for live outcomes · Grade comparison</p>
 </div>
-
-<div class="filter-bar">
-  <select id="fGrade" onchange="applyFilters()">
-    <option value="">All Grades</option>
-    <option value="A+">A+</option>
-    <option value="A">A</option>
-    <option value="B+">B+</option>
-  </select>
-  <select id="fDir" onchange="applyFilters()">
-    <option value="">All Directions</option>
-    <option value="long">Buy / Long</option>
-    <option value="short">Sell / Short</option>
-  </select>
-  <select id="fTrend" onchange="applyFilters()">
-    <option value="">All Trends</option>
-    <option value="uptrend">Uptrend</option>
-    <option value="downtrend">Downtrend</option>
-    <option value="sideways">Sideways</option>
-  </select>
-  <select id="fOutcome" onchange="applyFilters()">
-    <option value="">All Outcomes</option>
-    <option value="pending">⏳ Pending</option>
-    <option value="open">🔵 Open (Triggered)</option>
-    <option value="target_hit">✅ Target Hit</option>
-    <option value="stop_hit">❌ Stop Hit</option>
-    <option value="expired">⏰ Expired</option>
-  </select>
-  <input type="text" id="fSymbol" placeholder="Search symbol..." oninput="applyFilters()">
-  <button onclick="resetFilters()">Reset</button>
+<div class="h-btns">
+<a href="index.html" class="h-btn">← Back to Scanner</a>
+<button class="h-btn rescan" id="rescanBtn" onclick="rescanTrades()">🔄 Rescan Trades</button>
+<button class="h-btn export" onclick="exportCSV()">📥 Export CSV</button>
+<button class="h-btn danger" onclick="clearAll()">🗑️ Clear All</button>
+</div>
 </div>
 
 <div class="container">
-  <div class="stats-grid" id="statsGrid"></div>
-  <div class="grade-grid" id="gradeGrid"></div>
-  <div class="signal-log">
-    <h3>Signal Log <span>0</span></h3>
-    <div id="signalLog"></div>
-  </div>
+
+<!-- RESCAN STATUS BAR -->
+<div class="rescan-bar" id="rescanBar">
+<div class="rs-spinner"></div>
+<span class="rs-text" id="rsText">Rescanning trades...</span>
+<div class="rs-progress"><div class="rs-fill" id="rsFill" style="width:0%"></div></div>
+</div>
+
+<!-- RESCAN LOG -->
+<div class="rescan-log" id="rescanLog"></div>
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+<span class="f-label">Filters:</span>
+<select class="f-select" id="fGrade" onchange="applyFilters()">
+<option value="">All Grades</option><option value="A+">A+</option><option value="A">A</option><option value="B+">B+</option>
+</select>
+<select class="f-select" id="fDir" onchange="applyFilters()">
+<option value="">All Directions</option><option value="LONG">Buy/Long</option><option value="SHORT">Sell/Short</option>
+</select>
+<select class="f-select" id="fTrend" onchange="applyFilters()">
+<option value="">All Trends</option><option value="uptrend">Uptrend</option><option value="downtrend">Downtrend</option><option value="sideways">Sideways</option>
+</select>
+<select class="f-select" id="fOutcome" onchange="applyFilters()">
+<option value="">All Outcomes</option><option value="pending">Pending</option><option value="open">Open</option><option value="not_triggered">Not Triggered</option><option value="target_hit">Target Hit</option><option value="stop_hit">Stop Hit</option><option value="expired">Expired</option>
+</select>
+<input class="f-input" id="fSymbol" placeholder="Search symbol..." oninput="applyFilters()">
+<button class="f-reset" onclick="resetFilters()">Reset</button>
+</div>
+
+<!-- STATS -->
+<div class="stats-grid" id="statsGrid"></div>
+
+<!-- GRADE COMPARISON -->
+<div class="grade-grid" id="gradeGrid"></div>
+
+<!-- TABLE -->
+<div class="tbl-wrap">
+<div class="tbl-hdr">
+<span class="tbl-title">Signal Log</span>
+<span class="tbl-count" id="tblCount">0 signals</span>
+</div>
+<div class="tbl-scroll">
+<table>
+<thead><tr>
+<th onclick="sortBy('scan_date')">Date</th>
+<th onclick="sortBy('symbol')">Symbol</th>
+<th onclick="sortBy('direction')">Dir</th>
+<th onclick="sortBy('grade')">Grade</th>
+<th onclick="sortBy('grade_score')">Score</th>
+<th>Models</th>
+<th onclick="sortBy('entry')">Entry</th>
+<th onclick="sortBy('stop_loss')">SL</th>
+<th onclick="sortBy('target')">Target</th>
+<th onclick="sortBy('risk_reward')">R:R</th>
+<th onclick="sortBy('probability')">Conf</th>
+<th onclick="sortBy('trend')">Trend</th>
+<th>Status</th>
+<th>Outcome</th>
+<th>Exit ₹</th>
+<th onclick="sortBy('pnl')">P&L%</th>
+</tr></thead>
+<tbody id="tblBody"></tbody>
+</table>
+</div>
+<div class="pagination" id="pagination"></div>
+</div>
 </div>
 
 <div class="footer">
-  Peak & Trough Scanner v3.0 — Signal history stored in browser localStorage (max 5000)
+<p><span class="ver">Signal History v2.0</span><br>Auto-logs all signals · Rescan checks Entry/Target/SL via Yahoo Finance · Max 5,000 stored</p>
 </div>
 
 <script>
 const PER_PAGE=50;
-let allSignals=[];
-let filtered=[];
+const EXPIRY_DAYS=14;
+let allSignals=JSON.parse(localStorage.getItem('signalHistory')||'[]');
+let filtered=[...allSignals];
 let currentPage=1;
 let sortCol='scan_date';
 let sortDir='desc';
 
-// Load signals
-try{
-  let raw=localStorage.getItem('signalHistory');
-  if(raw) allSignals=JSON.parse(raw);
-}catch(e){console.error('Failed to load signals:',e)}
+function save(){localStorage.setItem('signalHistory',JSON.stringify(allSignals))}
 
-function save(){
-  localStorage.setItem('signalHistory',JSON.stringify(allSignals));
-  applyFilters();
+// ============================================
+// RESCAN ENGINE — Fetches price data from Yahoo
+// ============================================
+async function rescanTrades(){
+    const btn=document.getElementById('rescanBtn');
+    const bar=document.getElementById('rescanBar');
+    const log=document.getElementById('rescanLog');
+    const rsText=document.getElementById('rsText');
+    const rsFill=document.getElementById('rsFill');
+
+    // Get pending/open signals only
+    const toCheck=allSignals.filter(s=>!s.outcome||s.outcome==='pending'||s.outcome==='open'||s.outcome==='not_triggered');
+
+    if(toCheck.length===0){
+        alert('No pending/open trades to rescan.');
+        return;
+    }
+
+    btn.disabled=true;
+    btn.textContent='🔄 Scanning...';
+    btn.classList.add('scanning');
+    bar.classList.add('active');
+    log.classList.add('active');
+    log.innerHTML='<p>Starting rescan of '+toCheck.length+' signals...</p>';
+
+    let processed=0;
+    let results={triggered:0,target:0,stop:0,open:0,notTriggered:0,expired:0,errors:0};
+
+    for(let i=0;i<toCheck.length;i++){
+        const sig=toCheck[i];
+        const sym=sig.symbol;
+        const yahooSym=sym.replace('&','%26')+'.NS';
+
+        processed++;
+        const pct=Math.round((processed/toCheck.length)*100);
+        rsFill.style.width=pct+'%';
+        rsText.textContent=`Checking ${sym} (${processed}/${toCheck.length})`;
+
+        try{
+            // Parse signal date
+            const scanDate=parseSignalDate(sig.scan_date);
+            if(!scanDate){
+                log.innerHTML+=`<p class="miss">❌ ${sym}: Could not parse date</p>`;
+                results.errors++;
+                continue;
+            }
+
+            // Fetch price data from signal date to now
+            const startDate=formatDateForYahoo(scanDate);
+            const endDate=formatDateForYahoo(new Date(Date.now()+86400000)); // tomorrow
+
+            const url=`https://query1.finance.yahoo.com/v8/finance/chart/${yahooSym}?period1=${Math.floor(scanDate.getTime()/1000)}&period2=${Math.floor(Date.now()/1000)}&interval=1d`;
+
+            const response=await fetch(url);
+            const data=await response.json();
+
+            if(!data.chart||!data.chart.result||!data.chart.result[0]){
+                log.innerHTML+=`<p class="miss">⚠️ ${sym}: No data from Yahoo</p>`;
+                results.errors++;
+                continue;
+            }
+
+            const result=data.chart.result[0];
+            const highs=result.indicators.quote[0].high;
+            const lows=result.indicators.quote[0].low;
+            const closes=result.indicators.quote[0].close;
+            const timestamps=result.timestamp;
+
+            if(!highs||!lows||highs.length===0){
+                log.innerHTML+=`<p class="miss">⚠️ ${sym}: Empty price data</p>`;
+                results.errors++;
+                continue;
+            }
+
+            const entry=parseFloat(sig.entry);
+            const target=parseFloat(sig.target);
+            const sl=parseFloat(sig.stop_loss);
+            const dir=(sig.direction||sig.signal_type||'').toUpperCase();
+            const isLong=dir==='LONG'||dir==='BUY';
+
+            // Calculate days since signal
+            const daysSince=Math.floor((Date.now()-scanDate.getTime())/(1000*60*60*24));
+
+            // Find if entry was triggered
+            let entryTriggered=false;
+            let entryDayIdx=-1;
+
+            for(let j=0;j<highs.length;j++){
+                if(highs[j]===null||lows[j]===null)continue;
+                if(isLong){
+                    // For LONG: price must have come DOWN to entry level (Low ≤ Entry)
+                    // OR opened/traded at entry level
+                    if(lows[j]<=entry||closes[j]<=entry){
+                        entryTriggered=true;
+                        entryDayIdx=j;
+                        break;
+                    }
+                }else{
+                    // For SHORT: price must have come UP to entry level (High ≥ Entry)
+                    if(highs[j]>=entry||closes[j]>=entry){
+                        entryTriggered=true;
+                        entryDayIdx=j;
+                        break;
+                    }
+                }
+            }
+
+            if(!entryTriggered){
+                if(daysSince>=EXPIRY_DAYS){
+                    sig.outcome='expired';
+                    sig.rescan_note=`Never triggered in ${daysSince} days`;
+                    log.innerHTML+=`<p class="miss">⏰ ${sym}: Expired — entry ₹${entry} never triggered in ${daysSince} days</p>`;
+                    results.expired++;
+                }else{
+                    sig.outcome='not_triggered';
+                    sig.rescan_note=`Entry ₹${entry} not yet reached (${daysSince} days)`;
+                    log.innerHTML+=`<p>⏳ ${sym}: Not triggered yet — waiting (${daysSince}/${EXPIRY_DAYS} days)</p>`;
+                    results.notTriggered++;
+                }
+                continue;
+            }
+
+            // Entry was triggered — check post-entry prices for target/stop
+            let targetHit=false;
+            let stopHit=false;
+            let targetDay=-1;
+            let stopDay=-1;
+            let exitPrice=null;
+
+            for(let j=entryDayIdx;j<highs.length;j++){
+                if(highs[j]===null||lows[j]===null)continue;
+
+                if(isLong){
+                    // Check stop first (same day stop takes priority)
+                    if(lows[j]<=sl&&!stopHit&&!targetHit){
+                        stopHit=true;
+                        stopDay=j;
+                        exitPrice=sl;
+                    }
+                    // Check target
+                    if(highs[j]>=target&&!targetHit&&!stopHit){
+                        targetHit=true;
+                        targetDay=j;
+                        exitPrice=target;
+                    }
+                }else{
+                    // SHORT
+                    if(highs[j]>=sl&&!stopHit&&!targetHit){
+                        stopHit=true;
+                        stopDay=j;
+                        exitPrice=sl;
+                    }
+                    if(lows[j]<=target&&!targetHit&&!stopHit){
+                        targetHit=true;
+                        targetDay=j;
+                        exitPrice=target;
+                    }
+                }
+
+                // If either hit, stop checking
+                if(targetHit||stopHit)break;
+            }
+
+            if(targetHit){
+                sig.outcome='target_hit';
+                sig.exit_price=String(exitPrice);
+                sig.pnl=isLong?
+                    (((target-entry)/entry)*100).toFixed(2):
+                    (((entry-target)/entry)*100).toFixed(2);
+                sig.rescan_note=`Target ₹${target} hit`;
+                log.innerHTML+=`<p class="hit">✅ ${sym}: TARGET HIT at ₹${target} | P&L: +${sig.pnl}%</p>`;
+                results.target++;
+            }else if(stopHit){
+                sig.outcome='stop_hit';
+                sig.exit_price=String(exitPrice);
+                sig.pnl=isLong?
+                    (((sl-entry)/entry)*100).toFixed(2):
+                    (((entry-sl)/entry)*100).toFixed(2);
+                sig.rescan_note=`Stop ₹${sl} hit`;
+                log.innerHTML+=`<p class="miss">❌ ${sym}: STOP HIT at ₹${sl} | P&L: ${sig.pnl}%</p>`;
+                results.stop++;
+            }else{
+                // Trade is open — neither target nor stop hit yet
+                const lastClose=closes[closes.length-1]||entry;
+                sig.outcome='open';
+                sig.exit_price=String(lastClose.toFixed(2));
+                sig.pnl=isLong?
+                    (((lastClose-entry)/entry)*100).toFixed(2):
+                    (((entry-lastClose)/entry)*100).toFixed(2);
+                sig.rescan_note=`Open — current ₹${lastClose.toFixed(2)}`;
+                log.innerHTML+=`<p class="open">🔵 ${sym}: OPEN — current ₹${lastClose.toFixed(2)} | P&L: ${sig.pnl}%</p>`;
+                results.open++;
+            }
+
+        }catch(e){
+            log.innerHTML+=`<p class="miss">⚠️ ${sym}: Error — ${e.message}</p>`;
+            results.errors++;
+        }
+
+        // Small delay to avoid rate limiting
+        await new Promise(r=>setTimeout(r,300));
+    }
+
+    // Summary
+    log.innerHTML+=`<p style="margin-top:8px;font-weight:700;color:var(--dark)">━━ RESCAN COMPLETE ━━</p>`;
+    log.innerHTML+=`<p>✅ Targets Hit: ${results.target} | ❌ Stops Hit: ${results.stop} | 🔵 Open: ${results.open}</p>`;
+    log.innerHTML+=`<p>⏳ Not Triggered: ${results.notTriggered} | ⏰ Expired: ${results.expired} | ⚠️ Errors: ${results.errors}</p>`;
+
+    save();
+    applyFilters();
+
+    btn.disabled=false;
+    btn.textContent='🔄 Rescan Trades';
+    btn.classList.remove('scanning');
+    rsFill.style.width='100%';
+    rsText.textContent=`Done — ${processed} signals checked`;
+
+    // Auto-scroll log to bottom
+    log.scrollTop=log.scrollHeight;
 }
 
+// ============================================
+// DATE HELPERS
+// ============================================
+function parseSignalDate(dateStr){
+    if(!dateStr)return null;
+    try{
+        // Handle DD/MM/YYYY format
+        if(dateStr.includes('/')){
+            const parts=dateStr.split(/[/,\s]+/);
+            if(parts.length>=3){
+                const d=parseInt(parts[0]);
+                const m=parseInt(parts[1])-1;
+                const y=parseInt(parts[2]);
+                return new Date(y,m,d);
+            }
+        }
+        // Handle other formats
+        const d=new Date(dateStr);
+        return isNaN(d.getTime())?null:d;
+    }catch{return null}
+}
+
+function formatDateForYahoo(date){
+    const y=date.getFullYear();
+    const m=String(date.getMonth()+1).padStart(2,'0');
+    const d=String(date.getDate()).padStart(2,'0');
+    return`${y}-${m}-${d}`;
+}
+
+// ============================================
+// EXISTING FUNCTIONS (same as before)
+// ============================================
 function getActiveCount(s){
-  let c=0;
-  if(s.exhaustion_components){
-    let ec=s.exhaustion_components;
-    if(ec.zscore>=5)c++;
-    if(ec.wick>=5)c++;
-    if(ec.volume>=5)c++;
-    if(ec.momentum>=5)c++;
-  }
-  if(s.mtf_confirmed)c++;
-  return c;
+    if(!s.exhaustion_components)return 0;
+    let c=s.exhaustion_components,cnt=0;
+    if((c.zscore_component||0)>=5)cnt++;
+    if((c.wick_component||0)>=5)cnt++;
+    if((c.volume_component||0)>=5)cnt++;
+    if((c.momentum_component||0)>=5)cnt++;
+    if(s.mtf_confirmed)cnt++;
+    return cnt;
 }
 
 function modelDots(s){
-  let h='';
-  if(s.exhaustion_components){
-    let ec=s.exhaustion_components;
-    let colors=[
-      {v:ec.zscore||0,t:5,c:'#2980b9'},
-      {v:ec.wick||0,t:5,c:'#8e44ad'},
-      {v:ec.volume||0,t:5,c:'#d35400'},
-      {v:ec.momentum||0,t:5,c:'#27ae60'}
+    if(!s.exhaustion_components){
+        if(s.agreeing_models){
+            const models=['MRB','MDD','VRC','OFI','MTC'];
+            const active=s.agreeing_models?s.agreeing_models.split(', '):[];
+            const cls=['z','w','v','m','t'];
+            return models.map((m,i)=>`<div class="m-dot ${active.includes(m)?'on '+cls[i]:'off'}" title="${m}"></div>`).join('');
+        }
+        return'—';
+    }
+    let c=s.exhaustion_components;
+    let dots=[
+        {v:c.zscore_component||0,c:'z',n:'Z-Score'},
+        {v:c.wick_component||0,c:'w',n:'Wick'},
+        {v:c.volume_component||0,c:'v',n:'Volume'},
+        {v:c.momentum_component||0,c:'m',n:'Momentum'},
+        {v:s.mtf_confirmed?10:0,c:'t',n:'MTF'}
     ];
-    colors.forEach(m=>{
-      let on=m.v>=m.t;
-      h+=`<span class="mdot" style="background:${on?m.c:'#ccc'}" title="${m.v}"></span>`;
-    });
-    let mtfOn=s.mtf_confirmed||false;
-    h+=`<span class="mdot" style="background:${mtfOn?'#f39c12':'#ccc'}" title="MTF"></span>`;
-  } else if(s.agreeing_models){
-    let models=['MRB','MDD','VRC','OFI','MTC'];
-    let active=s.agreeing_models?s.agreeing_models.split(',').map(x=>x.trim()):[];
-    let colors=['#2980b9','#8e44ad','#d35400','#27ae60','#f39c12'];
-    models.forEach((m,i)=>{
-      let on=active.includes(m);
-      h+=`<span class="mdot" style="background:${on?colors[i]:'#ccc'}" title="${m}"></span>`;
-    });
-  } else {
-    for(let i=0;i<5;i++) h+=`<span class="mdot" style="background:#ccc"></span>`;
-  }
-  return h;
+    return dots.map(d=>`<div class="m-dot ${d.v>=5?'on '+d.c:'off'}" title="${d.n}: ${d.v}"></div>`).join('');
 }
 
 function calcPnL(s){
-  let ep=parseFloat(s.exit_price);
-  let ent=parseFloat(s.entry);
-  if(isNaN(ep)||isNaN(ent)||ent===0||ep===0) return null;
-  let dir=(s.direction||'').toUpperCase();
-  if(dir.includes('LONG')||dir.includes('BUY')){
-    return Math.round((ep-ent)/ent*10000)/100;
-  } else {
-    return Math.round((ent-ep)/ent*10000)/100;
-  }
+    if(!s.exit_price||s.exit_price==='')return'';
+    let ex=parseFloat(s.exit_price),en=s.entry;
+    if(isNaN(ex)||!en)return'';
+    let dir=(s.direction||s.signal_type||'').toUpperCase();
+    if(dir==='LONG'||dir==='BUY')return(((ex-en)/en)*100).toFixed(2);
+    return(((en-ex)/en)*100).toFixed(2);
 }
 
 function updateOutcome(id,val){
-  let idx=allSignals.findIndex(s=>s._id===id);
-  if(idx>-1){allSignals[idx].outcome=val;save();}
+    let s=allSignals.find(x=>x._id===id);
+    if(s){s.outcome=val;save();render()}
 }
 
 function updateExit(id,val){
-  let idx=allSignals.findIndex(s=>s._id===id);
-  if(idx>-1){
-    allSignals[idx].exit_price=val;
-    allSignals[idx].pnl=calcPnL(allSignals[idx]);
-    save();
-  }
+    let s=allSignals.find(x=>x._id===id);
+    if(s){s.exit_price=val;s.pnl=calcPnL(s);save();render()}
 }
 
 function applyFilters(){
-  let fG=document.getElementById('fGrade').value;
-  let fD=document.getElementById('fDir').value;
-  let fT=document.getElementById('fTrend').value;
-  let fO=document.getElementById('fOutcome').value;
-  let fS=document.getElementById('fSymbol').value.toLowerCase();
-
-  filtered=allSignals.filter(s=>{
-    if(fG && (s.grade||s.signal_grade||'')!==fG) return false;
-    if(fD){
-      let dir=(s.direction||'').toLowerCase();
-      if(fD==='long' && !dir.includes('long') && !dir.includes('buy')) return false;
-      if(fD==='short' && !dir.includes('short') && !dir.includes('sell')) return false;
-    }
-    if(fT && (s.trend||'').toLowerCase()!==fT) return false;
-    if(fO){
-      if(fO==='open'){
-        if(s.track_status!=='open') return false;
-      } else {
-        if((s.outcome||'pending')!==fO) return false;
-      }
-    }
-    if(fS && !(s.symbol||'').toLowerCase().includes(fS)) return false;
-    return true;
-  });
-
-  // Sort
-  filtered.sort((a,b)=>{
-    let av=a[sortCol]||'';
-    let bv=b[sortCol]||'';
-    if(typeof av==='number'&&typeof bv==='number'){
-      return sortDir==='asc'?av-bv:bv-av;
-    }
-    let cmp=String(av).localeCompare(String(bv));
-    return sortDir==='asc'?cmp:-cmp;
-  });
-
-  currentPage=1;
-  render();
+    let g=document.getElementById('fGrade').value;
+    let d=document.getElementById('fDir').value;
+    let t=document.getElementById('fTrend').value;
+    let o=document.getElementById('fOutcome').value;
+    let sym=document.getElementById('fSymbol').value.toUpperCase();
+    filtered=allSignals.filter(s=>{
+        if(g&&s.grade!==g)return false;
+        if(d){
+            let dir=(s.direction||'').toUpperCase();
+            if(d==='LONG'&&dir!=='LONG'&&dir!=='BUY')return false;
+            if(d==='SHORT'&&dir!=='SHORT'&&dir!=='SELL')return false;
+        }
+        if(t&&(s.trend||'')!==t)return false;
+        if(o&&(s.outcome||'pending')!==o)return false;
+        if(sym&&!(s.symbol||'').toUpperCase().includes(sym))return false;
+        return true;
+    });
+    currentPage=1;
+    render();
 }
 
 function resetFilters(){
-  document.getElementById('fGrade').value='';
-  document.getElementById('fDir').value='';
-  document.getElementById('fTrend').value='';
-  document.getElementById('fOutcome').value='';
-  document.getElementById('fSymbol').value='';
-  filtered=[...allSignals];
-  currentPage=1;
-  render();
+    document.getElementById('fGrade').value='';
+    document.getElementById('fDir').value='';
+    document.getElementById('fTrend').value='';
+    document.getElementById('fOutcome').value='';
+    document.getElementById('fSymbol').value='';
+    filtered=[...allSignals];
+    currentPage=1;
+    render();
 }
 
 function sortBy(col){
-  if(sortCol===col){sortDir=sortDir==='asc'?'desc':'asc';}
-  else{sortCol=col;sortDir='desc';}
-  filtered.sort((a,b)=>{
-    let av=a[sortCol]||'';
-    let bv=b[sortCol]||'';
-    if(typeof av==='number'&&typeof bv==='number'){
-      return sortDir==='asc'?av-bv:bv-av;
-    }
-    let cmp=String(av).localeCompare(String(bv));
-    return sortDir==='asc'?cmp:-cmp;
-  });
-  renderTable();
+    if(sortCol===col)sortDir=sortDir==='asc'?'desc':'asc';
+    else{sortCol=col;sortDir='desc'}
+    filtered.sort((a,b)=>{
+        let va=a[col]||'',vb=b[col]||'';
+        if(typeof va==='number'&&typeof vb==='number')return sortDir==='asc'?va-vb:vb-va;
+        va=String(va);vb=String(vb);
+        return sortDir==='asc'?va.localeCompare(vb):vb.localeCompare(va);
+    });
+    render();
+}
+
+function getStatusBadge(outcome){
+    const map={
+        'pending':['pending','⏳ Pending'],
+        'open':['open','🔵 Open'],
+        'not_triggered':['not-triggered','⚪ Not Triggered'],
+        'target_hit':['target-hit','✅ Target Hit'],
+        'stop_hit':['stop-hit','❌ Stop Hit'],
+        'expired':['expired','⏰ Expired']
+    };
+    const m=map[outcome||'pending']||map['pending'];
+    return`<span class="t-status ${m[0]}">${m[1]}</span>`;
 }
 
 function renderStats(){
-  let sigs=filtered;
-  let total=sigs.length;
-  let targets=sigs.filter(s=>s.outcome==='target_hit').length;
-  let stops=sigs.filter(s=>s.outcome==='stop_hit').length;
-  let resolved=targets+stops;
-  let wr=resolved>0?Math.round(targets/resolved*100):0;
-  let pending=sigs.filter(s=>!s.outcome||s.outcome==='pending').length;
-  let avgScore=total>0?Math.round(sigs.reduce((a,s)=>a+(s.grade_score||s.score||0),0)/total):0;
-  let avgRR=total>0?(sigs.reduce((a,s)=>a+(s.risk_reward||0),0)/total).toFixed(2):'0';
-  let totalPnL=sigs.reduce((a,s)=>{let p=calcPnL(s);return a+(p||0);},0).toFixed(2);
-  let pnlColor=parseFloat(totalPnL)>=0?'var(--green)':'var(--red)';
+    let all=filtered;
+    let total=all.length;
+    let tgtHit=all.filter(s=>s.outcome==='target_hit').length;
+    let stpHit=all.filter(s=>s.outcome==='stop_hit').length;
+    let resolved=tgtHit+stpHit;
+    let wr=resolved>0?((tgtHit/resolved)*100).toFixed(1):'-';
+    let pending=all.filter(s=>!s.outcome||s.outcome==='pending'||s.outcome==='not_triggered').length;
+    let openCount=all.filter(s=>s.outcome==='open').length;
+    let scores=all.map(s=>s.grade_score||s.score||0).filter(v=>v>0);
+    let avgScore=scores.length>0?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'-';
+    let rrs=all.map(s=>s.risk_reward||s.rr_ratio||0).filter(v=>v>0);
+    let avgRR=rrs.length>0?(rrs.reduce((a,b)=>a+b,0)/rrs.length).toFixed(1):'-';
+    let pnls=all.map(s=>parseFloat(s.pnl)||0).filter(v=>v!==0);
+    let totalPnl=pnls.length>0?pnls.reduce((a,b)=>a+b,0).toFixed(2):'0';
 
-  document.getElementById('statsGrid').innerHTML=`
-    <div class="stat-card"><h4>Total Signals</h4><div class="val">${total}</div></div>
-    <div class="stat-card sc-green"><h4>Targets Hit</h4><div class="val" style="color:var(--green)">${targets}</div></div>
-    <div class="stat-card sc-red"><h4>Stops Hit</h4><div class="val" style="color:var(--red)">${stops}</div></div>
-    <div class="stat-card sc-blue"><h4>Win Rate</h4><div class="val" style="color:var(--blue)">${wr}%</div></div>
-    <div class="stat-card sc-gold"><h4>Pending</h4><div class="val" style="color:var(--gold)">${pending}</div></div>
-    <div class="stat-card sc-purple"><h4>Avg Score</h4><div class="val" style="color:var(--purple)">${avgScore}</div></div>
-    <div class="stat-card sc-orange"><h4>Avg R:R</h4><div class="val" style="color:var(--orange)">${avgRR}</div></div>
-    <div class="stat-card ${parseFloat(totalPnL)>=0?'sc-green':'sc-red'}"><h4>Total P&L</h4><div class="val" style="color:${pnlColor}">${totalPnL}%</div></div>
-  `;
+    document.getElementById('statsGrid').innerHTML=`
+        <div class="stat-card"><div class="st-l">Total Signals</div><div class="st-v">${total}</div></div>
+        <div class="stat-card"><div class="st-l">Targets Hit</div><div class="st-v pos">${tgtHit}</div></div>
+        <div class="stat-card"><div class="st-l">Stops Hit</div><div class="st-v neg">${stpHit}</div></div>
+        <div class="stat-card"><div class="st-l">Win Rate</div><div class="st-v ${parseFloat(wr)>=50?'pos':'neg'}">${wr}%</div></div>
+        <div class="stat-card"><div class="st-l">Open</div><div class="st-v" style="color:var(--blue)">${openCount}</div><div class="st-s">${pending} waiting</div></div>
+        <div class="stat-card"><div class="st-l">Avg Score</div><div class="st-v">${avgScore}</div></div>
+        <div class="stat-card"><div class="st-l">Avg R:R</div><div class="st-v">${avgRR}</div></div>
+        <div class="stat-card"><div class="st-l">Total P&L</div><div class="st-v ${parseFloat(totalPnl)>=0?'pos':'neg'}">${totalPnl}%</div></div>
+    `;
 }
 
 function renderGrades(){
-  let grades=['A+','A','B+'];
-  let html='';
-  grades.forEach(g=>{
-    let gs=allSignals.filter(s=>(s.grade||s.signal_grade||'')===g);
-    let t=gs.length;
-    let tgt=gs.filter(s=>s.outcome==='target_hit').length;
-    let stp=gs.filter(s=>s.outcome==='stop_hit').length;
-    let res=tgt+stp;
-    let wr=res>0?Math.round(tgt/res*100):0;
-    let avgSc=t>0?Math.round(gs.reduce((a,s)=>a+(s.grade_score||s.score||0),0)/t):0;
-    let avgConf=t>0?Math.round(gs.reduce((a,s)=>{let p=s.probability?s.probability*100:parseFloat(s.confidence)||0;return a+p;},0)/t):0;
-    let pnl=gs.reduce((a,s)=>{let p=calcPnL(s);return a+(p||0);},0).toFixed(2);
-    let pC=parseFloat(pnl)>=0?'var(--green)':'var(--red)';
-
-    html+=`<div class="grade-card"><h3>${g} Signals (${t})</h3>
-      <div class="gd-row"><span>Win Rate</span><span style="font-weight:600">${wr}%</span></div>
-      <div class="gd-row"><span>Targets Hit</span><span style="color:var(--green)">${tgt}</span></div>
-      <div class="gd-row"><span>Stops Hit</span><span style="color:var(--red)">${stp}</span></div>
-      <div class="gd-row"><span>Avg Score</span><span>${avgSc}</span></div>
-      <div class="gd-row"><span>Avg Confidence</span><span>${avgConf}%</span></div>
-      <div class="gd-row"><span>Total P&L</span><span style="color:${pC};font-weight:600">${pnl}%</span></div>
-    </div>`;
-  });
-  document.getElementById('gradeGrid').innerHTML=html;
+    const grades=['A+','A','B+'];
+    const cls=['ap','a','bp'];
+    document.getElementById('gradeGrid').innerHTML=grades.map((g,i)=>{
+        let gs=allSignals.filter(s=>s.grade===g);
+        let total=gs.length;
+        let th=gs.filter(s=>s.outcome==='target_hit').length;
+        let sh=gs.filter(s=>s.outcome==='stop_hit').length;
+        let res=th+sh;
+        let wr=res>0?((th/res)*100).toFixed(1):'-';
+        let scores=gs.map(s=>s.grade_score||s.score||0).filter(v=>v>0);
+        let avgSc=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'-';
+        let confs=gs.map(s=>s.probability||0).filter(v=>v>0);
+        let avgConf=confs.length?((confs.reduce((a,b)=>a+b,0)/confs.length)*100).toFixed(1):'-';
+        let pnls=gs.map(s=>parseFloat(s.pnl)||0).filter(v=>v!==0);
+        let tp=pnls.length?pnls.reduce((a,b)=>a+b,0).toFixed(2):'0';
+        return`<div class="grade-card">
+            <div class="gc-hdr"><span class="gc-grade ${cls[i]}">${g}</span><span class="gc-count">${total} signals</span></div>
+            <div class="gc-grid">
+                <div class="gc-item"><span class="gl">Win Rate</span><span class="gv ${parseFloat(wr)>=50?'pos':'neg'}">${wr}%</span></div>
+                <div class="gc-item"><span class="gl">Targets</span><span class="gv pos">${th}</span></div>
+                <div class="gc-item"><span class="gl">Stops</span><span class="gv neg">${sh}</span></div>
+                <div class="gc-item"><span class="gl">Avg Score</span><span class="gv">${avgSc}</span></div>
+                <div class="gc-item"><span class="gl">Avg Conf</span><span class="gv">${avgConf}%</span></div>
+                <div class="gc-item"><span class="gl">Total P&L</span><span class="gv ${parseFloat(tp)>=0?'pos':'neg'}">${tp}%</span></div>
+            </div>
+        </div>`;
+    }).join('');
 }
 
 function renderTable(){
-  let sl=filtered.slice((currentPage-1)*PER_PAGE,currentPage*PER_PAGE);
-  let arrow=function(col){return sortCol===col?(sortDir==='asc'?' ▲':' ▼'):'';};
+    let start=(currentPage-1)*PER_PAGE;
+    let page=filtered.slice(start,start+PER_PAGE);
+    document.getElementById('tblCount').textContent=`${filtered.length} signals`;
 
-  let h=`<table><thead><tr>
-    <th onclick="sortBy('scan_date')">Date${arrow('scan_date')}</th>
-    <th onclick="sortBy('symbol')">Symbol${arrow('symbol')}</th>
-    <th onclick="sortBy('direction')">Dir${arrow('direction')}</th>
-    <th onclick="sortBy('grade')">Grade${arrow('grade')}</th>
-    <th onclick="sortBy('grade_score')">Score${arrow('grade_score')}</th>
-    <th>Models</th>
-    <th onclick="sortBy('entry')">Entry${arrow('entry')}</th>
-    <th onclick="sortBy('sl')">SL${arrow('sl')}</th>
-    <th onclick="sortBy('target')">Target${arrow('target')}</th>
-    <th onclick="sortBy('risk_reward')">R:R${arrow('risk_reward')}</th>
-    <th>Conf</th>
-    <th>Trend</th>
-    <th>Outcome</th>
-    <th class="track-col">Track Status</th>
-    <th class="track-col">Live P&L</th>
-    <th>Exit ₹</th>
-    <th>P&L%</th>
-  </tr></thead><tbody>`;
-
-  sl.forEach(s=>{
-    let dir=(s.direction||'').toUpperCase();
-    let isLong=dir.includes('LONG')||dir.includes('BUY');
-    let dCls=isLong?'color:#27ae60':'color:#e74c3c';
-    let dTxt=isLong?'LONG':'SHORT';
-    let g=s.grade||s.signal_grade||'';
-    let gCls=g==='A+'?'color:#27ae60;font-weight:700':g==='A'?'color:#2980b9;font-weight:700':'color:#d35400;font-weight:600';
-    let sc=s.grade_score||s.score||0;
-    let ent=s.entry||0;
-    let slv=s.sl||s.stop_loss||0;
-    let tgt=s.target||0;
-    let rr=s.risk_reward||0;
-    let conf=s.probability?Math.round(s.probability*100)+'%':(s.confidence||'—');
-    let trend=s.trend||'—';
-    let oc=s.outcome||'pending';
-    let ep=s.exit_price||'';
-    let pnl=calcPnL(s);
-    let pnlCls=pnl>0?'color:#27ae60':pnl<0?'color:#e74c3c':'color:#7f8c8d';
-    let pnlTxt=pnl!==null?pnl.toFixed(2)+'%':'—';
-    let fno=s.is_fno?'<span style="font-size:0.6rem;background:rgba(91,143,168,0.2);padding:1px 4px;border-radius:3px;margin-left:4px">FnO</span>':'';
-
-    // Track status
-    let trackStatus='';
-    let trackClass='';
-    let ts=s.track_status||'';
-    switch(ts){
-      case 'open':trackClass='ts-open';trackStatus='🔵 Open';break;
-      case 'target_hit':trackClass='ts-target';trackStatus='✅ Target';break;
-      case 'stop_hit':trackClass='ts-stop';trackStatus='❌ SL Hit';break;
-      case 'expired':trackClass='ts-expired';trackStatus='⏰ Expired';break;
-      case 'error':trackClass='ts-error';trackStatus='⚠️ Error';break;
-      default:trackClass='ts-pending';trackStatus='⏳ Not Tracked';
+    if(page.length===0){
+        document.getElementById('tblBody').innerHTML='<tr><td colspan="16" class="empty">No signals found. Run a scan first.</td></tr>';
+        document.getElementById('pagination').innerHTML='';
+        return;
     }
 
-    // Live P&L
-    let livePnl='';
-    if(ts==='open' && s.live_pnl_pct!==undefined){
-      let lCls=s.live_pnl_pct>0?'favor':s.live_pnl_pct<0?'against':'neutral';
-      let arrow2=s.live_pnl_pct>0?'▲':s.live_pnl_pct<0?'▼':'—';
-      livePnl=`<span class="pnl-live ${lCls}">${arrow2} ₹${s.live_pnl_price||0} (${s.live_pnl_pct}%)</span>`;
-      if(s.sl_distance!==undefined){
-        livePnl+=`<div class="track-details">SL: ₹${s.sl_distance} away</div>`;
-        livePnl+=`<div class="track-details">Tgt: ₹${s.target_distance} away</div>`;
-      }
-    } else if(ts==='target_hit'){
-      livePnl=`<span class="pnl-live favor">✅ Target Hit</span>`;
-    } else if(ts==='stop_hit'){
-      livePnl=`<span class="pnl-live against">❌ SL Hit</span>`;
-    } else if(ts==='expired'){
-      livePnl=`<span class="pnl-live neutral">Expired</span>`;
-    } else {
-      livePnl='<span class="pnl-live neutral">—</span>';
-    }
+    document.getElementById('tblBody').innerHTML=page.map(s=>{
+        let dir=(s.direction||s.signal_type||'').toUpperCase();
+        let dirDisplay=(dir==='LONG'||dir==='BUY')?'LONG':'SHORT';
+        let dirCls=dirDisplay==='LONG'?'long':'short';
+        let gCls=s.grade==='A+'?'ap':s.grade==='A'?'a':'bp';
+        let entry=s.entry||0;
+        let sl=s.stop_loss||0;
+        let tgt=s.target||0;
+        let rr=s.risk_reward||s.rr_ratio||0;
+        let conf=s.probability?((s.probability*100).toFixed(0)+'%'):(s.confidence||'-');
+        let trend=s.trend||'-';
+        let outcome=s.outcome||'pending';
+        let pnl=s.pnl||'';
+        let pnlCls=pnl===''?'neu':parseFloat(pnl)>0?'pos':parseFloat(pnl)<0?'neg':'neu';
+        let score=s.grade_score||s.score||0;
 
-    // Extra track info
-    let trackExtra='';
-    if(s.last_tracked) trackExtra+=`<div class="track-details">Checked: ${s.last_tracked}</div>`;
-    if(s.trigger_date) trackExtra+=`<div class="track-details">Triggered: ${s.trigger_date}</div>`;
-    if(s.days_pending>0 && (!ts||ts==='pending')) trackExtra+=`<div class="track-details">Pending: ${s.days_pending} day(s)</div>`;
+        return`<tr>
+            <td>${s.scan_date||'-'}</td>
+            <td><span class="t-sym">${s.symbol}</span>${s.is_fno?'<span class="t-fno">FnO</span>':''}</td>
+            <td><span class="t-dir ${dirCls}">${dirDisplay}</span></td>
+            <td><span class="t-grade ${gCls}">${s.grade}</span></td>
+            <td>${score}</td>
+            <td><div class="m-dots">${modelDots(s)}</div></td>
+            <td class="t-en">₹${parseFloat(entry).toFixed(2)}</td>
+            <td class="t-sl">₹${parseFloat(sl).toFixed(2)}</td>
+            <td class="t-tg">₹${parseFloat(tgt).toFixed(2)}</td>
+            <td>${parseFloat(rr).toFixed(1)}</td>
+            <td>${conf}</td>
+            <td>${trend}</td>
+            <td>${getStatusBadge(outcome)}</td>
+            <td><select class="t-outcome" onchange="updateOutcome('${s._id}',this.value)">
+                <option value="pending" ${outcome==='pending'?'selected':''}>⏳ Pending</option>
+                <option value="not_triggered" ${outcome==='not_triggered'?'selected':''}>⚪ Not Triggered</option>
+                <option value="open" ${outcome==='open'?'selected':''}>🔵 Open</option>
+                <option value="target_hit" ${outcome==='target_hit'?'selected':''}>✅ Target Hit</option>
+                <option value="stop_hit" ${outcome==='stop_hit'?'selected':''}>❌ Stop Hit</option>
+                <option value="expired" ${outcome==='expired'?'selected':''}>⏰ Expired</option>
+            </select></td>
+            <td><input class="t-exit" type="number" step="0.01" placeholder="Price" value="${s.exit_price||''}" onchange="updateExit('${s._id}',this.value)"></td>
+            <td><span class="t-pnl ${pnlCls}">${pnl?pnl+'%':'-'}</span></td>
+        </tr>`;
+    }).join('');
 
-    h+=`<tr>
-      <td>${s.scan_date||'—'}</td>
-      <td>${s.symbol||'—'}${fno}</td>
-      <td style="${dCls}">${dTxt}</td>
-      <td style="${gCls}">${g}</td>
-      <td>${sc}</td>
-      <td>${modelDots(s)}</td>
-      <td style="color:#5b8fa8">₹${Number(ent).toFixed(2)}</td>
-      <td style="color:#e74c3c">₹${Number(slv).toFixed(2)}</td>
-      <td style="color:#27ae60">₹${Number(tgt).toFixed(2)}</td>
-      <td>${Number(rr).toFixed(2)}</td>
-      <td>${conf}</td>
-      <td>${trend}</td>
-      <td><select onchange="updateOutcome('${s._id}',this.value)" style="font-size:0.72rem;padding:2px;border-radius:4px;border:1px solid #ddd">
-        <option value="pending" ${oc==='pending'?'selected':''}>⏳ Pending</option>
-        <option value="target_hit" ${oc==='target_hit'?'selected':''}>✅ Target Hit</option>
-        <option value="stop_hit" ${oc==='stop_hit'?'selected':''}>❌ Stop Hit</option>
-        <option value="expired" ${oc==='expired'?'selected':''}>⏰ Expired</option>
-      </select></td>
-      <td class="track-col"><span class="track-status ${trackClass}">${trackStatus}</span>${trackExtra}</td>
-      <td class="track-col">${livePnl}</td>
-      <td><input type="number" value="${ep}" onchange="updateExit('${s._id}',this.value)" style="width:70px;font-size:0.72rem;padding:2px;border:1px solid #ddd;border-radius:4px" placeholder="Exit ₹"></td>
-      <td style="${pnlCls};font-weight:600">${pnlTxt}</td>
-    </tr>`;
-  });
-
-  h+='</tbody></table>';
-
-  // Pagination
-  let totalPages=Math.ceil(filtered.length/PER_PAGE);
-  if(totalPages>1){
-    h+='<div class="pagination">';
-    h+=`<button onclick="goPage(1)" ${currentPage===1?'disabled':''}>«</button>`;
-    h+=`<button onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
-    let startP=Math.max(1,currentPage-2);
-    let endP=Math.min(totalPages,startP+4);
-    if(endP-startP<4) startP=Math.max(1,endP-4);
+    let totalPages=Math.ceil(filtered.length/PER_PAGE);
+    if(totalPages<=1){document.getElementById('pagination').innerHTML='';return}
+    let pgHTML='';
+    pgHTML+=`<button class="pg-btn" onclick="goPage(1)" ${currentPage===1?'disabled':''}>«</button>`;
+    pgHTML+=`<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+    let startP=Math.max(1,currentPage-2),endP=Math.min(totalPages,currentPage+2);
     for(let p=startP;p<=endP;p++){
-      h+=`<button onclick="goPage(${p})" ${p===currentPage?'style="background:#5b8fa8;color:#fff"':''}>${p}</button>`;
+        pgHTML+=`<button class="pg-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
     }
-    h+=`<button onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>›</button>`;
-    h+=`<button onclick="goPage(${totalPages})" ${currentPage===totalPages?'disabled':''}>»</button>`;
-    h+='</div>';
-  }
-
-  document.getElementById('signalLog').innerHTML=h;
-  document.querySelector('.signal-log h3 span').textContent=filtered.length;
+    pgHTML+=`<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>›</button>`;
+    pgHTML+=`<button class="pg-btn" onclick="goPage(${totalPages})" ${currentPage===totalPages?'disabled':''}>»</button>`;
+    document.getElementById('pagination').innerHTML=pgHTML;
 }
 
-function goPage(p){currentPage=p;renderTable();}
-
-function render(){
-  renderStats();
-  renderGrades();
-  renderTable();
-}
+function goPage(p){currentPage=p;renderTable()}
+function render(){renderStats();renderGrades();renderTable()}
 
 function exportCSV(){
-  let csv='Date,Symbol,FnO,Direction,Grade,Score,Entry,SL,Target,RR,Confidence,Trend,Outcome,TrackStatus,LivePnL,ExitPrice,PnL%\n';
-  filtered.forEach(s=>{
-    let dir=(s.direction||'').toUpperCase();
-    let isLong=dir.includes('LONG')||dir.includes('BUY');
-    let pnl=calcPnL(s);
-    csv+=`${s.scan_date||''},${s.symbol||''},${s.is_fno?'Yes':'No'},${isLong?'LONG':'SHORT'},${s.grade||''},${s.grade_score||s.score||0},${s.entry||0},${s.sl||s.stop_loss||0},${s.target||0},${s.risk_reward||0},${s.probability?Math.round(s.probability*100)+'%':(s.confidence||'')},${s.trend||''},${s.outcome||'pending'},${s.track_status||'not_tracked'},${s.live_pnl_pct||''},${s.exit_price||''},${pnl!==null?pnl:''}\n`;
-  });
-  let blob=new Blob([csv],{type:'text/csv'});
-  let url=URL.createObjectURL(blob);
-  let a=document.createElement('a');
-  a.href=url;
-  a.download=`signal_history_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+    if(filtered.length===0){alert('No data to export');return}
+    let headers=['Date','Symbol','FnO','Direction','Grade','Score','Entry','StopLoss','Target','RR','Confidence','Trend','Status','Outcome','ExitPrice','PnL%','RescanNote'];
+    let rows=filtered.map(s=>{
+        let dir=(s.direction||s.signal_type||'').toUpperCase();
+        return[
+            s.scan_date||'',s.symbol||'',s.is_fno?'Yes':'No',dir,s.grade||'',
+            s.grade_score||s.score||'',s.entry||'',s.stop_loss||'',s.target||'',
+            s.risk_reward||s.rr_ratio||'',
+            s.probability?((s.probability*100).toFixed(1)+'%'):(s.confidence||''),
+            s.trend||'',s.outcome||'pending',s.outcome||'',s.exit_price||'',s.pnl||'',
+            (s.rescan_note||'').replace(/,/g,';')
+        ].join(',');
+    });
+    let csv=headers.join(',')+'\n'+rows.join('\n');
+    let blob=new Blob([csv],{type:'text/csv'});
+    let url=URL.createObjectURL(blob);
+    let a=document.createElement('a');
+    a.href=url;a.download=`signal_history_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();URL.revokeObjectURL(url);
 }
 
 function clearAll(){
-  if(confirm('Are you sure? This will delete ALL signal history permanently.')){
-    allSignals=[];
-    localStorage.removeItem('signalHistory');
-    applyFilters();
-  }
-}
-
-// ━━━ RESCAN TRADES TRACKING ━━━
-
-function getApiUrl(){
-  return (localStorage.getItem('ptScannerApiUrl')||'https://peak-trough-scanner.onrender.com').replace(/\/+$/,'');
-}
-
-async function rescanTrades(){
-  const btn=document.getElementById('rescanBtn');
-  const statusBox=document.getElementById('rescanStatus');
-  const bar=document.getElementById('rsBar');
-  const text=document.getElementById('rsText');
-  const result=document.getElementById('rsResult');
-
-  // Get trackable signals: pending + open (not expired/target_hit/stop_hit)
-  let trackable=allSignals.filter(s=>{
-    let oc=s.outcome||'pending';
-    let ts=s.track_status||'';
-    return (oc==='pending' && ts!=='expired' && ts!=='target_hit' && ts!=='stop_hit') || ts==='open';
-  });
-
-  // Remove duplicates by _id
-  let seen=new Set();
-  let toTrack=[];
-  trackable.forEach(s=>{
-    if(!seen.has(s._id)){seen.add(s._id);toTrack.push(s);}
-  });
-
-  if(toTrack.length===0){
-    alert('No pending or open trades to rescan.\n\nAll trades are either expired, target hit, or stop hit.');
-    return;
-  }
-
-  // Show status
-  btn.disabled=true;
-  btn.innerHTML='⏳ Rescanning...';
-  statusBox.classList.add('active');
-  bar.style.width='0%';
-  text.textContent=`Found ${toTrack.length} trades to track...`;
-  result.innerHTML='';
-
-  let apiUrl=getApiUrl();
-
-  // Wake up server
-  text.textContent='Waking up server (may take 30s if sleeping)...';
-  bar.style.width='5%';
-
-  try{
-    let controller=new AbortController();
-    let timeoutId=setTimeout(()=>controller.abort(),30000);
-    await fetch(`${apiUrl}/api/health`,{signal:controller.signal});
-    clearTimeout(timeoutId);
-  }catch(e){
-    text.textContent='Server waking up, continuing...';
-  }
-
-  bar.style.width='10%';
-  text.textContent='Server ready. Sending signals for tracking...';
-
-  // Batch (max 20 per request)
-  const BATCH_SIZE=20;
-  let batches=[];
-  for(let i=0;i<toTrack.length;i+=BATCH_SIZE){
-    batches.push(toTrack.slice(i,i+BATCH_SIZE));
-  }
-
-  let stats={triggered:0,expired:0,pending:0,targetHit:0,stopHit:0,open:0,errors:0};
-  let processedCount=0;
-
-  for(let bIdx=0;bIdx<batches.length;bIdx++){
-    let batch=batches[bIdx];
-
-    let payload=batch.map(s=>({
-      _id:s._id,
-      symbol:s.symbol||'',
-      yahoo_ticker:s.yahoo_ticker||(s.symbol?s.symbol+'.NS':''),
-      entry:s.entry||0,
-      sl:s.sl||s.stop_loss||0,
-      target:s.target||0,
-      direction:s.direction||'',
-      signal_date:s.scan_date||'',
-      days_pending:s.days_pending||0
-    }));
-
-    text.textContent=`Tracking batch ${bIdx+1}/${batches.length} (${batch.length} signals)...`;
-
-    try{
-      let controller2=new AbortController();
-      let timeoutId2=setTimeout(()=>controller2.abort(),120000);
-      let resp=await fetch(`${apiUrl}/api/track`,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({signals:payload}),
-        signal:controller2.signal
-      });
-      clearTimeout(timeoutId2);
-
-      if(!resp.ok) throw new Error(`Server error: ${resp.status}`);
-
-      let data=await resp.json();
-
-      if(data.results && Array.isArray(data.results)){
-        data.results.forEach(r=>{
-          let idx=allSignals.findIndex(s=>s._id===r._id);
-          if(idx===-1) return;
-
-          let sig=allSignals[idx];
-          sig.track_status=r.status||'pending';
-          sig.last_tracked=r.last_checked||new Date().toISOString().slice(0,16).replace('T',' ');
-          sig.days_pending=r.days_pending||sig.days_pending||0;
-
-          if(r.entry_triggered) sig.trigger_date=r.trigger_date||'';
-
-          if(r.status==='open'){
-            sig.live_pnl_price=r.pnl_price||0;
-            sig.live_pnl_pct=r.pnl_pct||0;
-            sig.current_close=r.current_close||0;
-            sig.sl_distance=r.sl_distance||0;
-            sig.target_distance=r.target_distance||0;
-            stats.open++;
-          } else if(r.status==='target_hit'){
-            sig.outcome='target_hit';
-            sig.exit_price=r.exit_price||sig.target;
-            sig.pnl=calcPnL(sig);
-            stats.targetHit++;
-          } else if(r.status==='stop_hit'){
-            sig.outcome='stop_hit';
-            sig.exit_price=r.exit_price||(sig.sl||sig.stop_loss);
-            sig.pnl=calcPnL(sig);
-            stats.stopHit++;
-          } else if(r.status==='expired'){
-            sig.outcome='expired';
-            sig.track_status='expired';
-            stats.expired++;
-          } else if(r.status==='error'){
-            sig.track_status='error';
-            stats.errors++;
-          } else {
-            stats.pending++;
-          }
-
-          allSignals[idx]=sig;
-        });
-      }
-    }catch(e){
-      console.error(`Batch ${bIdx+1} error:`,e);
-      stats.errors+=batch.length;
-      text.textContent=`Batch ${bIdx+1} failed: ${e.message}. Continuing...`;
+    if(confirm('Delete ALL signal history? This cannot be undone.')){
+        allSignals=[];filtered=[];
+        localStorage.removeItem('signalHistory');
+        render();
+        document.getElementById('rescanLog').classList.remove('active');
+        document.getElementById('rescanBar').classList.remove('active');
     }
-
-    processedCount+=batch.length;
-    let pct=10+Math.round((processedCount/toTrack.length)*85);
-    bar.style.width=pct+'%';
-  }
-
-  // Save
-  localStorage.setItem('signalHistory',JSON.stringify(allSignals));
-  bar.style.width='100%';
-  text.textContent='✅ Rescan complete!';
-
-  result.innerHTML=`
-    <div><span class="open-trade">🔵 Open trades: ${stats.open}</span></div>
-    <div><span class="triggered">✅ Targets hit: ${stats.targetHit}</span></div>
-    <div><span class="expired">❌ Stops hit: ${stats.stopHit}</span></div>
-    <div><span class="still-pending">⏳ Still pending: ${stats.pending}</span></div>
-    <div><span class="expired">⏰ Expired: ${stats.expired}</span></div>
-    ${stats.errors>0?`<div><span class="expired">⚠️ Errors: ${stats.errors}</span></div>`:''}
-  `;
-
-  // Re-render
-  applyFilters();
-
-  // Reset button
-  btn.disabled=false;
-  btn.innerHTML='🔄 Rescan Trades';
-
-  // Auto-hide after 10s
-  setTimeout(()=>{statusBox.classList.remove('active');},10000);
 }
 
-// ━━━ INIT ━━━
 applyFilters();
 </script>
 </body>
