@@ -382,7 +382,30 @@ def api_scan():
         return jsonify({'status':'error','message':str(e)}), 500
     finally:
         scan_in_progress = False
-
+@app.route('/api/check_price')
+def check_price():
+    sym = request.args.get('symbol', '')
+    start = request.args.get('start', '')
+    if not sym:
+        return jsonify({'error': 'No symbol provided'}), 400
+    try:
+        yahoo_sym = sym.replace('&', '%26') + '.NS'
+        df = yf.download(yahoo_sym, start=start, interval='1d', progress=False, auto_adjust=True)
+        if df.empty:
+            return jsonify({'error': 'No data found'}), 404
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = df.columns.get_level_values(0)
+        result = {
+            'symbol': sym,
+            'highs': [float(x) if not pd.isna(x) else None for x in df['High'].values],
+            'lows': [float(x) if not pd.isna(x) else None for x in df['Low'].values],
+            'closes': [float(x) if not pd.isna(x) else None for x in df['Close'].values],
+            'dates': [str(d.date()) for d in df.index],
+            'count': len(df)
+        }
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 @app.route('/api/results')
 def api_results():
     if cached_results is None:
